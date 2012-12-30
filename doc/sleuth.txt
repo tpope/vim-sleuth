@@ -1,0 +1,17 @@
+*sleuth.txt*  Heuristically set buffer options
+
+Author:  Tim Pope <http://tpo.pe/>
+Repo:    https://github.com/tpope/vim-sleuth
+License: Same terms as Vim itself (see |license|)
+
+This plugin is only available if 'compatible' is not set.
+
+SUMMARY                                         *sleuth*
+
+This plugin automatically adjusts 'shiftwidth' and 'tabstop' heuristically
+based on the current file, or, in the case the current file is new, blank, or
+otherwise insufficient, by looking at other files of the same type in the
+current and parent directories.  In lieu of adjusting 'softtabstop',
+'smarttab' is enabled.
+
+ vim:tw=78:et:ft=help:norl:
