@@ -41,8 +41,8 @@ Self-Promotion
 --------------
 
 Like sleuth.vim?  Follow the repository on
-[GitHub](https://github.com/tpope/vim-sleuth).  And if
-you're feeling especially charitable, follow [tpope](http://tpo.pe/) on
+[GitHub](https://github.com/tpope/vim-sleuth) and vote for it on
+[vim.org](http://www.vim.org/scripts/script.php?script_id=4375).  And if
 [Twitter](http://twitter.com/tpope) and
 [GitHub](https://github.com/tpope).
 
