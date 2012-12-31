@@ -50,5 +50,5 @@ you're feeling especially charitable, follow [tpope](http://tpo.pe/) on
 License
 -------
 
-Copyright (c) Tim Pope.  Distributed under the same terms as Vim itself.
+Copyright © Tim Pope.  Distributed under the same terms as Vim itself.
 See `:help license`.
