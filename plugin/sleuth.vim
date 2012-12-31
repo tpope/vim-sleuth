@@ -78,9 +78,6 @@ function! s:apply_if_ready(options) abort
     for [option, value] in items(a:options)
       call setbufvar('', '&'.option, value)
     endfor
-    if &verbose
-      echomsg string(a:options)
-    endif
     return 1
   endif
 endfunction
