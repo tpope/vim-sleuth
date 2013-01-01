@@ -31,14 +31,12 @@ then simply copy and paste:
   battle tested.  It's probably not (yet) as good as [DetectIndent][].
   Let me know what it fails on for you.
 
-Contributing
-------------
+## Contributing
 
 See the contribution guidelines for
 [pathogen.vim](https://github.com/tpope/vim-pathogen#readme).
 
-Self-Promotion
---------------
+## Self-Promotion
 
 Like sleuth.vim?  Follow the repository on
 [GitHub](https://github.com/tpope/vim-sleuth) and vote for it on
@@ -47,8 +45,7 @@ you're feeling especially charitable, follow [tpope](http://tpo.pe/) on
 [Twitter](http://twitter.com/tpope) and
 [GitHub](https://github.com/tpope).
 
-License
--------
+## License
 
 Copyright © Tim Pope.  Distributed under the same terms as Vim itself.
 See `:help license`.
