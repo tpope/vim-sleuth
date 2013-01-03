@@ -10,6 +10,7 @@ let g:loaded_sleuth = 1
 
 function! s:guess(lines) abort
   let options = {}
+  let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
   let ccomment = 0
 
   for line in a:lines
@@ -30,9 +31,12 @@ function! s:guess(lines) abort
 
     let softtab = repeat(' ', 8)
     if line =~# '^\t'
-      let options.expandtab = 0
+      let heuristics.hard += 1
     elseif line =~# '^' . softtab
-      let options.expandtab = 1
+      let heuristics.soft += 1
+    endif
+    if line =~# '^  '
+      let heuristics.spaces += 1
     endif
     let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
     if indent > 1 && get(options, 'shiftwidth', 99) > indent
@@ -40,6 +44,15 @@ function! s:guess(lines) abort
     endif
 
   endfor
+
+  if heuristics.hard && !heuristics.spaces
+    return {'expandtab': 0, 'shiftwidth': &tabstop}
+  elseif heuristics.soft != heuristics.hard
+    let options.expandtab = heuristics.soft > heuristics.spaces
+    if heuristics.hard
+      let options.tabstop = 8
+    endif
+  endif
 
   return options
 endfunction
