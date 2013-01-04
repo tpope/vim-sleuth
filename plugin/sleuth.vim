@@ -12,6 +12,7 @@ function! s:guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
   let ccomment = 0
+  let podcomment = 0
 
   for line in a:lines
 
@@ -25,6 +26,16 @@ function! s:guess(lines) abort
     if ccomment
       if line =~# '\*/'
         let ccomment = 0
+      endif
+      continue
+    endif
+
+    if line =~# '^=\w'
+      let podcomment = 1
+    endif
+    if podcomment
+      if line =~# '^=\%(end\|cut\)\>'
+        let podcomment = 0
       endif
       continue
     endif
