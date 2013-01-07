@@ -16,7 +16,7 @@ function! s:guess(lines) abort
 
   for line in a:lines
 
-    if line =~# '^\s\+$'
+    if line =~# '^\s*$'
       continue
     endif
 
