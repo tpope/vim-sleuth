@@ -113,10 +113,9 @@ function! s:detect() abort
   endif
   let patterns = s:patterns_for(&filetype)
   call filter(patterns, 'v:val !~# "/"')
-  if !empty(patterns)
-    let pattern = len(patterns) == 1 ? patterns[0] : '{'.join(patterns, ',').'}'
-    let dir = expand('%:p:h')
-    while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
+  let dir = expand('%:p:h')
+  while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
+    for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")
         if neighbor !=# expand('%:p')
           call extend(options, s:guess(readfile(neighbor, '', 1024)), 'keep')
@@ -125,9 +124,9 @@ function! s:detect() abort
           return
         endif
       endfor
-      let dir = fnamemodify(dir, ':h')
-    endwhile
-  endif
+    endfor
+    let dir = fnamemodify(dir, ':h')
+  endwhile
   if has_key(options, 'shiftwidth')
     return s:apply_if_ready(extend({'expandtab': 1}, options))
   endif
