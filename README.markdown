@@ -33,11 +33,6 @@ then simply copy and paste:
   battle tested.  It's probably not (yet) as good as [DetectIndent][].
   Let me know what it fails on for you.
 
-## Contributing
-
-See the contribution guidelines for
-[pathogen.vim](https://github.com/tpope/vim-pathogen#readme).
-
 ## Self-Promotion
 
 Like sleuth.vim?  Follow the repository on
