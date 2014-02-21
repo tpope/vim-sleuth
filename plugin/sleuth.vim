@@ -117,10 +117,11 @@ function! s:detect() abort
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")
-        if neighbor !=# expand('%:p')
+        if neighbor !=# expand('%:p') && filereadable(neighbor)
           call extend(options, s:guess(readfile(neighbor, '', 1024)), 'keep')
         endif
         if s:apply_if_ready(options)
+          let b:sleuth_culprit = neighbor
           return
         endif
       endfor
