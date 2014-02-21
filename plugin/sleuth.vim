@@ -13,6 +13,7 @@ function! s:guess(lines) abort
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
   let ccomment = 0
   let podcomment = 0
+  let triplequote = 0
 
   for line in a:lines
 
@@ -38,6 +39,25 @@ function! s:guess(lines) abort
         let podcomment = 0
       endif
       continue
+    endif
+
+    if line =~# '^=\w'
+      let podcomment = 1
+    endif
+    if podcomment
+      if line =~# '^=\%(end\|cut\)\>'
+        let podcomment = 0
+      endif
+      continue
+    endif
+
+    if triplequote
+      if line =~# '^[^"]*"""[^"]*$'
+        let triplequote = 0
+      endif
+      continue
+    elseif line =~# '^[^"]*"""[^"]*$'
+      let triplequote = 1
     endif
 
     let softtab = repeat(' ', 8)
