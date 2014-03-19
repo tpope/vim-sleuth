@@ -138,7 +138,7 @@ function! s:detect() abort
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:8]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:guess(readfile(neighbor, '', 256), 'keep')
+          call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
         endif
         if s:apply_if_ready(options)
           let b:sleuth_culprit = neighbor
