@@ -132,18 +132,10 @@ function! s:detect() abort
     return
   endif
   let patterns = s:patterns_for(&filetype)
+  let patterns = ['*.'.expand('%:e')] + patterns
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
-    for neighbor in split(glob(dir.'/*.'.expand('%:e')), "\n")[0:7]
-      if neighbor !=# expand('%:p') && filereadable(neighbor)
-        call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
-      endif
-      if s:apply_if_ready(options)
-        let b:sleuth_culprit = neighbor
-        return
-      endif
-    endfor
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
