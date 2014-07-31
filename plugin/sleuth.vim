@@ -96,11 +96,7 @@ function! s:patterns_for(type) abort
     redir => capture
     silent autocmd BufRead
     redir END
-    let patterns = {
-          \ 'c': ['*.c'],
-          \ 'html': ['*.html'],
-          \ 'sh': ['*.sh'],
-          \ }
+    let patterns = {}
     let setfpattern = '\s\+\%(setf\%[iletype]\s\+\|set\%[local]\s\+\%(ft\|filetype\)=\|call SetFileTypeSH(["'']\%(ba\|k\)\=\%(sh\)\@=\)'
     for line in split(capture, "\n")
       let match = matchlist(line, '^\s*\(\S\+\)\='.setfpattern.'\(\w\+\)')
