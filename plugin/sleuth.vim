@@ -97,7 +97,8 @@ function! s:patterns_for(type) abort
     silent autocmd BufRead
     redir END
     let patterns = {
-          \ 'c': ['*.c'],
+          \ 'c': ['*.c', '*.h'],
+          \ 'cpp': ['*.cpp', '*.h'],
           \ 'html': ['*.html'],
           \ 'sh': ['*.sh'],
           \ }
