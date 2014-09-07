@@ -71,6 +71,12 @@ function! s:guess(lines) abort
       continue
     endif
 
+    " Ignore C++ access modifiers to avoid inferring the wrong shiftwidth if
+    " the modifiers have a special indent.
+    if line =~# '^\s*\(public\|private\|protected\):'
+      continue
+    endif
+
     if line =~# '^\t'
       let heuristics.hard += 1
     elseif line =~# '^' . softtab
