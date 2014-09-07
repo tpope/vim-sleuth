@@ -60,6 +60,12 @@ function! s:guess(lines) abort
       let triplequote = 1
     endif
 
+    " Ignore C++ access modifiers to avoid inferring the wrong shiftwidth if
+    " the modifiers have a special indent.
+    if line =~# '^\s*\(public\|private\|protected\):'
+      continue
+    endif
+
     let softtab = repeat(' ', 8)
     if line =~# '^\t'
       let heuristics.hard += 1
