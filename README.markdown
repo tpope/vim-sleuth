@@ -28,10 +28,14 @@ then simply copy and paste:
   the first file in a brand new Ruby project might very well be derived from
   your `.irbrc`.  I consider this a feature.
 * If your file is consistently indented with hard tabs, `'shiftwidth'` will be
-  set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 is enforced.
+  set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 unless configured
 * The algorithm is rolled from scratch, fairly simplistic, and only lightly
   battle tested.  It's probably not (yet) as good as [DetectIndent][].
   Let me know what it fails on for you.
+
+## Options
+* g:SleuthDefaultWidth - Change the default width from 8 to whatever you want
+
 
 ## Self-Promotion
 
