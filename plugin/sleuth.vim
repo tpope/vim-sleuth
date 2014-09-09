@@ -8,6 +8,10 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
+if !exists("g:SleuthDefaultWidth")
+  let g:SleuthDefaultWidth = "8"
+endif
+
 function! s:guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
@@ -60,7 +64,7 @@ function! s:guess(lines) abort
       let triplequote = 1
     endif
 
-    let softtab = repeat(' ', 8)
+    let softtab = repeat(' ', g:SleuthDefaultWidth)
     if line =~# '^\t'
       let heuristics.hard += 1
     elseif line =~# '^' . softtab
@@ -81,7 +85,7 @@ function! s:guess(lines) abort
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
     if heuristics.hard
-      let options.tabstop = 8
+      let options.tabstop = g:SleuthDefaultWidth
     endif
   endif
 
