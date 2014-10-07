@@ -76,7 +76,7 @@ function! s:guess(lines) abort
       let heuristics.spaces += 1
     endif
     let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
-    if indent > 1 && get(options, 'shiftwidth', 99) > indent
+    if indent > 1 && indent % 2 == 0 && get(options, 'shiftwidth', 99) > indent
       let options.shiftwidth = indent
     endif
 
