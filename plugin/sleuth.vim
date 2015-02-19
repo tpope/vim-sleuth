@@ -117,6 +117,10 @@ function! s:apply_if_ready(options) abort
 endfunction
 
 function! s:detect() abort
+  if &modifiable == 0
+    return
+  endif
+
   let options = s:guess(getline(1, 1024))
   if s:apply_if_ready(options)
     return
