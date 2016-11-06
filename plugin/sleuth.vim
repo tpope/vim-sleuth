@@ -15,10 +15,10 @@ function! s:guess(lines) abort
   let podcomment = 0
   let triplequote = 0
   let backtick = 0
+  let softtab = repeat(' ', 8)
 
   for line in a:lines
-
-    if line =~# '^\s*$'
+    if !len(line) || line =~# '^\s*$'
       continue
     endif
 
@@ -60,7 +60,6 @@ function! s:guess(lines) abort
       let backtick = 1
     endif
 
-    let softtab = repeat(' ', 8)
     if line =~# '^\t'
       let heuristics.hard += 1
     elseif line =~# '^' . softtab
@@ -73,7 +72,6 @@ function! s:guess(lines) abort
     if indent > 1 && get(options, 'shiftwidth', 99) > indent
       let options.shiftwidth = indent
     endif
-
   endfor
 
   if heuristics.hard && !heuristics.spaces
