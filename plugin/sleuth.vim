@@ -131,10 +131,12 @@ function! s:detect() abort
     return
   endif
 
-  let options = s:guess(getline(1, 1024))
+  let maxlines = get(g:, 'sleuth_maxlines', 1024)
+  let options = s:guess(getline(1, maxlines))
   if s:apply_if_ready(options)
     return
   endif
+  let maxlines_n = get(g:, 'sleuth_maxlines_neighbor', min([maxlines, 256]))
   let patterns = s:patterns_for(&filetype)
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
@@ -142,7 +144,7 @@ function! s:detect() abort
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
+          call extend(options, s:guess(readfile(neighbor, '', maxlines_n)), 'keep')
         endif
         if s:apply_if_ready(options)
           let b:sleuth_culprit = neighbor
