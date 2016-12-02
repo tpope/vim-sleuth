@@ -8,6 +8,10 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
+if !exists("g:sleuth_default_width")
+  let g:sleuth_default_width = 8
+endif
+
 function! s:guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
@@ -15,7 +19,7 @@ function! s:guess(lines) abort
   let podcomment = 0
   let triplequote = 0
   let backtick = 0
-  let softtab = repeat(' ', 8)
+  let softtab = repeat(' ', g:sleuth_default_width)
 
   for line in a:lines
     if !len(line) || line =~# '^\s*$'
@@ -79,7 +83,7 @@ function! s:guess(lines) abort
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
     if heuristics.hard
-      let options.tabstop = 8
+      let options.tabstop = g:sleuth_default_width
     endif
   endif
 
