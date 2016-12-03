@@ -161,9 +161,14 @@ if !exists('g:did_indent_on')
   filetype indent on
 endif
 
+command! -bar SleuthDetect call s:detect()
+
 augroup sleuth
   autocmd!
-  autocmd FileType * call s:detect()
+
+  if !exists('g:sleuth_enable_on_vim_startup') || g:sleuth_enable_on_vim_startup=="1"
+    autocmd FileType * :SleuthDetect
+  endif
 augroup END
 
 " vim:set et sw=2:
