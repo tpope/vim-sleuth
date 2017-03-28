@@ -166,4 +166,6 @@ augroup sleuth
   autocmd FileType * call s:detect()
 augroup END
 
+command! -bar -bang Sleuth call s:detect()
+
 " vim:set et sw=2:

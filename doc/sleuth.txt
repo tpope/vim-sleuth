@@ -14,4 +14,7 @@ otherwise insufficient, by looking at other files of the same type in the
 current and parent directories.  In lieu of adjusting 'softtabstop',
 'smarttab' is enabled.
 
+                                                *:Sleuth*
+:Sleuth                 Manually detect indentation.
+
  vim:tw=78:et:ft=help:norl:
