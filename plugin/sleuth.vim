@@ -163,7 +163,7 @@ endif
 
 augroup sleuth
   autocmd!
-  autocmd FileType * call s:detect()
+  autocmd FileType * if get(g:, 'sleuth_automatic', 1) | call s:detect() | endif
 augroup END
 
 command! -bar -bang Sleuth call s:detect()
