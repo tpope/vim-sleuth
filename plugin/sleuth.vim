@@ -161,9 +161,21 @@ if !exists('g:did_indent_on')
   filetype indent on
 endif
 
+function! SleuthIndicator() abort
+  if &expandtab
+    return 'sw='.&shiftwidth
+  elseif &tabstop == &shiftwidth
+    return 'ts='.&tabstop
+  else
+    return 'sw='.&shiftwidth.',ts='.&tabstop
+  endif
+endfunction
+
 augroup sleuth
   autocmd!
   autocmd FileType * if get(g:, 'sleuth_automatic', 1) | call s:detect() | endif
+  autocmd FileType * call s:detect()
+  autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
 command! -bar -bang Sleuth call s:detect()
