@@ -157,10 +157,6 @@ endfunction
 
 setglobal smarttab
 
-if !exists('g:did_indent_on')
-  filetype indent on
-endif
-
 function! SleuthIndicator() abort
   if &expandtab
     return 'sw='.&shiftwidth
@@ -179,5 +175,10 @@ augroup sleuth
 augroup END
 
 command! -bar -bang Sleuth call s:detect()
+
+if exists('g:did_indent_on')
+  filetype indent off
+endif
+filetype indent on
 
 " vim:set et sw=2:
