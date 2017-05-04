@@ -158,12 +158,13 @@ endfunction
 setglobal smarttab
 
 function! SleuthIndicator() abort
+  let sw = &shiftwidth ? &shiftwidth : &tabstop
   if &expandtab
-    return 'sw='.&shiftwidth
-  elseif &tabstop == &shiftwidth
+    return 'sw='.sw
+  elseif &tabstop == sw
     return 'ts='.&tabstop
   else
-    return 'sw='.&shiftwidth.',ts='.&tabstop
+    return 'sw='.sw.',ts='.&tabstop
   endif
 endfunction
 
