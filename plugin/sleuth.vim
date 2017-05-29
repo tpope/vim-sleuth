@@ -109,6 +109,7 @@ function! s:patterns_for(type) abort
           \ 'c': ['*.c'],
           \ 'html': ['*.html'],
           \ 'sh': ['*.sh'],
+          \ 'vim': ['vimrc', '.vimrc', '_vimrc'],
           \ }
     let setfpattern = '\s\+\%(setf\%[iletype]\s\+\|set\%[local]\s\+\%(ft\|filetype\)=\|call SetFileTypeSH(["'']\%(ba\|k\)\=\%(sh\)\@=\)'
     for line in split(capture, "\n")
