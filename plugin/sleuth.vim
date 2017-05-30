@@ -99,7 +99,7 @@ function! s:patterns_for(type) abort
           \ 'html': ['*.html'],
           \ 'sh': ['*.sh'],
           \ }
-    let setfpattern = '\s\+\%(setf\%[iletype]\s\+\|set\%[local]\s\+\%(ft\|filetype\)=\|call SetFileTypeSH(["'']\%(ba\|k\)\=\%(sh\)\@=\)'
+    let setfpattern = '\s\+\%(setf\%[iletype]\s\+\|setl\%[ocal]\s\+\%(ft\|filetype\)=\|call SetFileTypeSH(["'']\%(ba\|k\)\=\%(sh\)\@=\)'
     for line in split(capture, "\n")
       let match = matchlist(line, '^\s*\(\S\+\)\='.setfpattern.'\(\w\+\)')
       if !empty(match)
