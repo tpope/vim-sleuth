@@ -27,4 +27,8 @@ Automatic detection of buffer options can be controlled with:
 >
   let g:sleuth_automatic = 0
 <
+or:
+>
+  let b:sleuth_automatic = 0
+<
  vim:tw=78:et:ft=help:norl:
