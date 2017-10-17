@@ -133,23 +133,26 @@ function! s:detect() abort
   if s:apply_if_ready(options)
     return
   endif
-  let patterns = s:patterns_for(&filetype)
-  call filter(patterns, 'v:val !~# "/"')
-  let dir = expand('%:p:h')
-  while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
-    for pattern in patterns
-      for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
-        if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
-        endif
-        if s:apply_if_ready(options)
-          let b:sleuth_culprit = neighbor
-          return
-        endif
+
+  if get(g:, 'sleuth_try_other_files', 1)
+    let patterns = s:patterns_for(&filetype)
+    call filter(patterns, 'v:val !~# "/"')
+    let dir = expand('%:p:h')
+    while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
+      for pattern in patterns
+        for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
+          if neighbor !=# expand('%:p') && filereadable(neighbor)
+            call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
+          endif
+          if s:apply_if_ready(options)
+            let b:sleuth_culprit = neighbor
+            return
+          endif
+        endfor
       endfor
-    endfor
-    let dir = fnamemodify(dir, ':h')
-  endwhile
+      let dir = fnamemodify(dir, ':h')
+    endwhile
+  endif
   if has_key(options, 'shiftwidth')
     return s:apply_if_ready(extend({'expandtab': 1}, options))
   endif
