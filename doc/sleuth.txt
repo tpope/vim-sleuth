@@ -14,4 +14,17 @@ otherwise insufficient, by looking at other files of the same type in the
 current and parent directories.  In lieu of adjusting 'softtabstop',
 'smarttab' is enabled.
 
+                                                *:Sleuth*
+:Sleuth                 Manually detect indentation.
+
+                                                *SleuthIndicator()*
+SleuthIndicator()       Indicator for inclusion in 'statusline'.  Or use
+                        flagship.vim to have it included automatically.
+
+SETTINGS                                     *sleuth-settings*
+
+Automatic detection of buffer options can be controlled with:
+>
+  let g:sleuth_automatic = 0
+<
  vim:tw=78:et:ft=help:norl:

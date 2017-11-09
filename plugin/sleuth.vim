@@ -9,7 +9,7 @@ endif
 let g:loaded_sleuth = 1
 
 if !exists("g:SleuthDefaultWidth")
-  let g:SleuthDefaultWidth = "8"
+  let g:SleuthDefaultWidth = 8
 endif
 
 function! s:guess(lines) abort
@@ -18,10 +18,12 @@ function! s:guess(lines) abort
   let ccomment = 0
   let podcomment = 0
   let triplequote = 0
+  let backtick = 0
+  let xmlcomment = 0
+  let softtab = repeat(' ', g:SleuthDefaultWidth)
 
   for line in a:lines
-
-    if line =~# '^\s*$'
+    if !len(line) || line =~# '^\s*$'
       continue
     endif
 
@@ -45,16 +47,6 @@ function! s:guess(lines) abort
       continue
     endif
 
-    if line =~# '^=\w'
-      let podcomment = 1
-    endif
-    if podcomment
-      if line =~# '^=\%(end\|cut\)\>'
-        let podcomment = 0
-      endif
-      continue
-    endif
-
     if triplequote
       if line =~# '^[^"]*"""[^"]*$'
         let triplequote = 0
@@ -64,7 +56,25 @@ function! s:guess(lines) abort
       let triplequote = 1
     endif
 
-    let softtab = repeat(' ', g:SleuthDefaultWidth)
+    if backtick
+      if line =~# '^[^`]*`[^`]*$'
+        let backtick = 0
+      endif
+      continue
+    elseif line =~# '^[^`]*`[^`]*$'
+      let backtick = 1
+    endif
+
+    if line =~# '^\s*<\!--'
+      let xmlcomment = 1
+    endif
+    if xmlcomment
+      if line =~# '-->'
+        let xmlcomment = 0
+      endif
+      continue
+    endif
+
     if line =~# '^\t'
       let heuristics.hard += 1
     elseif line =~# '^' . softtab
@@ -77,7 +87,6 @@ function! s:guess(lines) abort
     if indent > 1 && get(options, 'shiftwidth', 99) > indent
       let options.shiftwidth = indent
     endif
-
   endfor
 
   if heuristics.hard && !heuristics.spaces
@@ -131,6 +140,10 @@ function! s:apply_if_ready(options) abort
 endfunction
 
 function! s:detect() abort
+  if &buftype ==# 'help'
+    return
+  endif
+
   let options = s:guess(getline(1, 1024))
   if s:apply_if_ready(options)
     return
@@ -159,13 +172,28 @@ endfunction
 
 setglobal smarttab
 
-if !exists('g:did_indent_on')
-  filetype indent on
-endif
+function! SleuthIndicator() abort
+  let sw = &shiftwidth ? &shiftwidth : &tabstop
+  if &expandtab
+    return 'sw='.sw
+  elseif &tabstop == sw
+    return 'ts='.&tabstop
+  else
+    return 'sw='.sw.',ts='.&tabstop
+  endif
+endfunction
 
 augroup sleuth
   autocmd!
-  autocmd FileType * call s:detect()
+  autocmd FileType * if get(g:, 'sleuth_automatic', 1) | call s:detect() | endif
+  autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
+
+command! -bar -bang Sleuth call s:detect()
+
+if exists('g:did_indent_on')
+  filetype indent off
+endif
+filetype indent on
 
 " vim:set et sw=2:
