@@ -181,7 +181,9 @@ endfunction
 
 augroup sleuth
   autocmd!
-  autocmd FileType * if get(g:, 'sleuth_automatic', 1) | call s:detect() | endif
+  autocmd FileType *
+        \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
+        \ | call s:detect() | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
