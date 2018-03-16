@@ -148,17 +148,25 @@ function! s:detect() abort
   let patterns = s:patterns_for(&filetype)
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
-  while isdirectory(dir) && dir !=# fnamemodify(dir, ':h')
+  let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 20))
+  while isdirectory(dir) && dir !=# fnamemodify(dir, ':h') && c > 0
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
           call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
+          let c -= 1
         endif
         if s:apply_if_ready(options)
           let b:sleuth_culprit = neighbor
           return
         endif
+        if c <= 0
+          break
+        endif
       endfor
+      if c <= 0
+        break
+      endif
     endfor
     let dir = fnamemodify(dir, ':h')
   endwhile
