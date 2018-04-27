@@ -145,10 +145,10 @@ function! s:detect() abort
   if s:apply_if_ready(options)
     return
   endif
-  let patterns = s:patterns_for(&filetype)
+  let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 20))
+  let patterns = c > 0 ? s:patterns_for(&filetype) : []
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
-  let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 20))
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h') && c > 0
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
