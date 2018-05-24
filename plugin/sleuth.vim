@@ -8,6 +8,17 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
+function! s:blame(cmd) abort
+  redir => capture
+  silent verbose execute a:cmd
+  redir END
+  return matchstr(capture, '\n\t\zs.*')
+endfunction
+
+if !exists('s:blame_sw')
+  let s:blame_sw = s:blame('setlocal shiftwidth?')
+endif
+
 function! s:guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
@@ -80,7 +91,8 @@ function! s:guess(lines) abort
       let heuristics.spaces += 1
     endif
     let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
-    if indent > 1 && get(options, 'shiftwidth', 99) > indent
+    if indent > 1 && (indent < 4 || indent % 2 == 0) &&
+          \ get(options, 'shiftwidth', 99) > indent
       let options.shiftwidth = indent
     endif
   endfor
