@@ -8,17 +8,6 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
-function! s:blame(cmd) abort
-  redir => capture
-  silent verbose execute a:cmd
-  redir END
-  return matchstr(capture, '\n\t\zs.*')
-endfunction
-
-if !exists('s:blame_sw')
-  let s:blame_sw = s:blame('setlocal shiftwidth?')
-endif
-
 function! s:guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
