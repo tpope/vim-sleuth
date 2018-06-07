@@ -8,6 +8,18 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
+function! s:get_most_indent(indent_stats) abort
+  let most_indent = 0
+  let max_count = 0
+  for [indent, indent_count] in items(a:indent_stats)
+    if indent_count > max_count
+      let most_indent = indent
+      let max_count = indent_count
+    endif
+  endfor
+  return most_indent
+endfunction
+
 function! s:guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
@@ -17,8 +29,14 @@ function! s:guess(lines) abort
   let backtick = 0
   let xmlcomment = 0
   let softtab = repeat(' ', 8)
+  let indent_stats = {} " indent statistics
+  let lineno = 0
+  let prev_indent_lineno = 0
+  let prev_indent = 0
+
 
   for line in a:lines
+    let lineno += 1
     if !len(line) || line =~# '^\s*$'
       continue
     endif
@@ -80,10 +98,17 @@ function! s:guess(lines) abort
       let heuristics.spaces += 1
     endif
     let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
-    if indent > 1 && (indent < 4 || indent % 2 == 0) &&
-          \ get(options, 'shiftwidth', 99) > indent
-      let options.shiftwidth = indent
+    let indent_inc = indent - prev_indent
+    " Only indent increament will be statistics
+    if lineno == prev_indent_lineno + 1 && indent_inc >= 2
+      if has_key(indent_stats, indent_inc)
+        let indent_stats[indent_inc] += 1
+      else
+        let indent_stats[indent_inc] = 1
+      endif
     endif
+    let prev_indent_lineno = lineno
+    let prev_indent = indent
   endfor
 
   if heuristics.hard && !heuristics.spaces
@@ -93,6 +118,11 @@ function! s:guess(lines) abort
     if heuristics.hard
       let options.tabstop = 8
     endif
+  endif
+
+  let most_indent = s:get_most_indent(indent_stats)
+  if most_indent > 1 && get(options, 'shiftwidth', 99) > most_indent
+    let options.shiftwidth = most_indent
   endif
 
   return options
