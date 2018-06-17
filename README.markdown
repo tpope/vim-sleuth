@@ -33,6 +33,34 @@ then simply copy and paste:
   battle tested.  It's probably not (yet) as good as [DetectIndent][].
   Let me know what it fails on for you.
 
+### Setting default indenting levels (for different file types)
+
+If you would like to change Vim's the default indenting level (which is tabs for all files), then you can add the following code below to your `.vimrc`. 
+
+```vim
+" Indenting defaults (does not override vim-sleuth's indenting detection)
+" Defaults to 4 spaces for most filetypes
+if get(g:, '_has_set_default_indent_settings', 0) == 0
+  " Set the indenting level to 2 spaces for the following file types.
+  autocmd FileType 
+        \ typescript,
+        \ javascript,
+        \ jsx,
+        \ tsx,
+        \ css,
+        \ html,
+        \ ruby,
+        \ elixir,
+        \ kotlin,
+        \ vim
+        \ setlocal expandtab tabstop=2 shiftwidth=2
+  set expandtab
+  set tabstop=4
+  set shiftwidth=4
+  let g:_has_set_default_indent_settings = 1
+endif
+```
+
 ## Self-Promotion
 
 Like sleuth.vim?  Follow the repository on
