@@ -42,7 +42,6 @@ If you would like to change Vim's the default indenting level (which is tabs for
 " Defaults to 4 spaces for most filetypes
 autocmd FileType typescript,javascript,jsx,tsx,css,html,ruby,elixir,kotlin,vim,plantuml
       \ setlocal expandtab tabstop=2 shiftwidth=2
-" setglobal seems to not override sleuth when reloading vimrc
 setglobal expandtab
 setglobal tabstop=4
 setglobal shiftwidth=4
