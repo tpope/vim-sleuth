@@ -151,6 +151,11 @@ function! s:detect() abort
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h') && c > 0
+    " the user home dir and the root dir likely contain a collection of files
+    " from different origins that do not provide any useful insight
+    if dir == expand('~') || dir == '/'
+      break
+    endif
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
