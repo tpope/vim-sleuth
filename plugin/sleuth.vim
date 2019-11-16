@@ -57,7 +57,7 @@ function! s:guess(lines) abort
         let backtick = 0
       endif
       continue
-    elseif line =~# '^[^`]*`[^`]*$'
+    elseif &filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let backtick = 1
     endif
 
