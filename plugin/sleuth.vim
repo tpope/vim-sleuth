@@ -1,6 +1,6 @@
 " sleuth.vim - Heuristically set buffer options
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.1
+" Version:      1.2
 " GetLatestVimScripts: 4375 1 :AutoInstall: sleuth.vim
 
 if exists("g:loaded_sleuth") || v:version < 700 || &cp
