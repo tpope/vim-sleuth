@@ -8,7 +8,7 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
-function! s:guess(lines) abort
+function! s:Guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
   let ccomment = 0
@@ -98,7 +98,7 @@ function! s:guess(lines) abort
   return options
 endfunction
 
-function! s:patterns_for(type) abort
+function! s:PatternsFor(type) abort
   if a:type ==# ''
     return []
   endif
@@ -126,7 +126,7 @@ function! s:patterns_for(type) abort
   return copy(get(s:patterns, a:type, []))
 endfunction
 
-function! s:apply_if_ready(options) abort
+function! s:ApplyIfReady(options) abort
   if !has_key(a:options, 'expandtab') || !has_key(a:options, 'shiftwidth')
     return 0
   else
@@ -137,27 +137,27 @@ function! s:apply_if_ready(options) abort
   endif
 endfunction
 
-function! s:detect() abort
+function! s:Detect() abort
   if &buftype ==# 'help'
     return
   endif
 
-  let options = s:guess(getline(1, 1024))
-  if s:apply_if_ready(options)
+  let options = s:Guess(getline(1, 1024))
+  if s:ApplyIfReady(options)
     return
   endif
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 20))
-  let patterns = c > 0 ? s:patterns_for(&filetype) : []
+  let patterns = c > 0 ? s:PatternsFor(&filetype) : []
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h') && c > 0
     for pattern in patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:guess(readfile(neighbor, '', 256)), 'keep')
+          call extend(options, s:Guess(readfile(neighbor, '', 256)), 'keep')
           let c -= 1
         endif
-        if s:apply_if_ready(options)
+        if s:ApplyIfReady(options)
           let b:sleuth_culprit = neighbor
           return
         endif
@@ -172,7 +172,7 @@ function! s:detect() abort
     let dir = fnamemodify(dir, ':h')
   endwhile
   if has_key(options, 'shiftwidth')
-    return s:apply_if_ready(extend({'expandtab': 1}, options))
+    return s:ApplyIfReady(extend({'expandtab': 1}, options))
   endif
 endfunction
 
@@ -197,10 +197,10 @@ augroup sleuth
   autocmd!
   autocmd FileType *
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | call s:detect() | endif
+        \ | call s:Detect() | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
-command! -bar -bang Sleuth call s:detect()
+command! -bar -bang Sleuth call s:Detect()
 
 " vim:set et sw=2:
