@@ -121,6 +121,7 @@ function! s:PatternsFor(type) abort
       endif
       let last = matchstr(line, '\S.*')
     endfor
+    let patterns.markdown = []
     call map(patterns, 'sort(v:val)')
     let s:patterns = patterns
   endif
