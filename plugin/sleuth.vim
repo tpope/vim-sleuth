@@ -121,6 +121,7 @@ function! s:PatternsFor(type) abort
       endif
       let last = matchstr(line, '\S.*')
     endfor
+    call map(patterns, 'sort(v:val)')
     let s:patterns = patterns
   endif
   return copy(get(s:patterns, a:type, []))
@@ -151,7 +152,12 @@ function! s:Detect() abort
   call filter(patterns, 'v:val !~# "/"')
   let dir = expand('%:p:h')
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h') && c > 0
+    let last_pattern = ''
     for pattern in patterns
+      if pattern ==# last_pattern
+        continue
+      endif
+      let last_pattern = pattern
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
           call extend(options, s:Guess(readfile(neighbor, '', 256)), 'keep')
