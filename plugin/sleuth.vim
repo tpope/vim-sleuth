@@ -87,7 +87,7 @@ function! s:Guess(lines) abort
   endfor
 
   if heuristics.hard && !heuristics.spaces
-    return {'expandtab': 0, 'shiftwidth': &tabstop}
+    return {'expandtab': 0, 'shiftwidth': 0}
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
     if heuristics.hard
@@ -132,6 +132,9 @@ function! s:ApplyIfReady(options) abort
   if !has_key(a:options, 'expandtab') || !has_key(a:options, 'shiftwidth')
     return 0
   else
+    if !a:options.shiftwidth && !exists('*shiftwidth')
+      let a:options.shiftwidth = get(a:options, 'tabstop', &tabstop)
+    endif
     for [option, value] in items(a:options)
       call setbufvar('', '&'.option, value)
     endfor
