@@ -143,18 +143,21 @@ function! s:ApplyIfReady(options) abort
 endfunction
 
 function! s:Detect() abort
+  unlet! b:sleuth_culprit
   if &buftype ==# 'help'
     return
   endif
+  let file = tr(expand('%:p'), exists('+shellslash') ? '\' : '/', '/')
 
   let options = s:Guess(getline(1, 1024))
   if s:ApplyIfReady(options)
+    let b:sleuth_culprit = file
     return
   endif
+  let dir = fnamemodify(file, ':h')
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 20))
   let patterns = c > 0 ? s:PatternsFor(&filetype) : []
   call filter(patterns, 'v:val !~# "/"')
-  let dir = expand('%:p:h')
   while isdirectory(dir) && dir !=# fnamemodify(dir, ':h') && c > 0
     let last_pattern = ''
     for pattern in patterns
