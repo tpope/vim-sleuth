@@ -30,6 +30,8 @@ function! s:Guess(lines) abort
       let waiting_on = '^[^"]*"""[^"]*$'
     elseif line =~# '^=\w' && line !~# '^=\%(end\|cut\)\>'
       let waiting_on = '^=\%(end\|cut\)\>'
+    elseif line =~# '^@@\+ -\d\+,\d\+ '
+      let waiting_on = '^$'
     elseif &filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
     elseif &filetype =~# '^[cz]\=sh$'
