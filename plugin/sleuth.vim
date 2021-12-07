@@ -73,14 +73,19 @@ function! s:Guess(lines) abort
   return options
 endfunction
 
+function! s:Capture(cmd) abort
+  redir => capture
+  silent execute a:cmd
+  redir END
+  return capture
+endfunction
+
 function! s:PatternsFor(type) abort
   if a:type ==# ''
     return []
   endif
   if !exists('s:patterns')
-    redir => capture
-    silent autocmd BufRead
-    redir END
+    let capture = s:Capture('autocmd BufRead')
     let patterns = {
           \ 'c': ['*.c', '*.h'],
           \ 'cpp': ['*.cpp', '*.h'],
@@ -104,6 +109,38 @@ function! s:PatternsFor(type) abort
   return copy(get(s:patterns, a:type, []))
 endfunction
 
+let s:modeline_numbers = {
+      \ 'shiftwidth': 'shiftwidth', 'sw': 'shiftwidth',
+      \ 'tabstop': 'tabstop', 'ts': 'tabstop',
+      \ }
+let s:modeline_booleans = {
+      \ 'expandtab': 'expandtab', 'et': 'expandtab',
+      \ }
+function! s:ModelineOptions() abort
+  let options = {}
+  if !&l:modeline && (&g:modeline || s:Capture('setlocal!') =~# "\nnomodeline\\>")
+    return options
+  endif
+  let modelines = get(b:, 'sleuth_modelines', get(g:, 'sleuth_modelines', 5))
+  if line('$') > 2 * modelines
+    let lnums = range(1, modelines) + range(line('$') - modelines + 1, line('$'))
+  else
+    let lnums = range(1, line('$'))
+  endif
+  for lnum in lnums
+    for option in split(matchstr(getline(lnum), '\%(\S\@<!vim\=\|\s\@<=ex\):\s*\(set\= \zs[^:]\+\|\zs.*\S\)'), '[[:space:]:]\+')
+      if has_key(s:modeline_booleans, matchstr(option, '^\%(no\)\=\zs\w\+$'))
+        let options[s:modeline_booleans[matchstr(option, '^\%(no\)\=\zs\w\+')]] = option !~# '^no'
+      elseif has_key(s:modeline_numbers, matchstr(option, '^\w\+\ze=[1-9]\d*$'))
+        let options[s:modeline_numbers[matchstr(option, '^\w\+')]] = str2nr(matchstr(option, '\d\+$'))
+      elseif option ==# 'nomodeline' || option ==# 'noml'
+        return options
+      endif
+    endfor
+  endfor
+  return options
+endfunction
+
 function! s:ApplyIfReady(options) abort
   if !has_key(a:options, 'expandtab') || !has_key(a:options, 'shiftwidth')
     return 0
@@ -125,7 +162,13 @@ function! s:Detect() abort
   endif
   let file = tr(expand('%:p'), exists('+shellslash') ? '\' : '/', '/')
 
-  let options = s:Guess(getline(1, 1024))
+  let options = s:ModelineOptions()
+  if s:ApplyIfReady(options)
+    let b:sleuth_culprit = file
+    return
+  endif
+
+  call extend(options, s:Guess(getline(1, 1024)), 'keep')
   if s:ApplyIfReady(options)
     let b:sleuth_culprit = file
     return

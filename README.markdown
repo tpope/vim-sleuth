@@ -30,6 +30,8 @@ support:
   your `.irbrc`.  I consider this a feature.
 * If your file is consistently indented with hard tabs, `'shiftwidth'` will be
   set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 is enforced.
+* Indenting settings in modelines are used, even if `'modeline'` is disabled
+  globally.
 
 ## Self-Promotion
 
