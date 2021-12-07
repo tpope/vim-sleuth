@@ -34,8 +34,8 @@ function! s:Guess(lines) abort
       let waiting_on = '^$'
     elseif &filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
-    elseif &filetype =~# '^[cz]\=sh$'
-      let waiting_on = matchstr(line, '<<\s*\zs\w\+\ze\s*\%(|\|$\)')
+    elseif &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
+      let waiting_on = matchstr(line, '<<\s*\([''"]\=\)\zs\w\+\ze\1[^''"`<>]*$')
       if len(waiting_on)
         let waiting_on = '^' . waiting_on . '$'
       endif
