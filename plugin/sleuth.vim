@@ -11,64 +11,27 @@ let g:loaded_sleuth = 1
 function! s:Guess(lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
-  let ccomment = 0
-  let podcomment = 0
-  let triplequote = 0
-  let backtick = 0
-  let xmlcomment = 0
   let softtab = repeat(' ', 8)
+  let waiting_on = ''
 
   for line in a:lines
-    if !len(line) || line =~# '^\s*$'
-      continue
-    endif
-
-    if line =~# '^\s*/\*'
-      let ccomment = 1
-    endif
-    if ccomment
-      if line =~# '\*/'
-        let ccomment = 0
+    if len(waiting_on)
+      if line =~# waiting_on
+        let waiting_on = ''
       endif
       continue
-    endif
-
-    if line =~# '^=\w'
-      let podcomment = 1
-    endif
-    if podcomment
-      if line =~# '^=\%(end\|cut\)\>'
-        let podcomment = 0
-      endif
+    elseif line =~# '^\s*$'
       continue
-    endif
-
-    if triplequote
-      if line =~# '^[^"]*"""[^"]*$'
-        let triplequote = 0
-      endif
-      continue
+    elseif line =~# '^\s*/\*' && line !~# '\*/'
+      let waiting_on = '\*/'
+    elseif line =~# '^\s*<\!--' && line !~# '-->'
+      let waiting_on = '-->'
     elseif line =~# '^[^"]*"""[^"]*$'
-      let triplequote = 1
-    endif
-
-    if backtick
-      if line =~# '^[^`]*`[^`]*$'
-        let backtick = 0
-      endif
-      continue
+      let waiting_on = '^[^"]*"""[^"]*$'
+    elseif line =~# '^=\w' && line !~# '^=\%(end\|cut\)\>'
+      let waiting_on = '^=\%(end\|cut\)\>'
     elseif &filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
-      let backtick = 1
-    endif
-
-    if line =~# '^\s*<\!--'
-      let xmlcomment = 1
-    endif
-    if xmlcomment
-      if line =~# '-->'
-        let xmlcomment = 0
-      endif
-      continue
+      let waiting_on = '^[^`]*`[^`]*$'
     endif
 
     if line =~# '^\t'
