@@ -10,7 +10,7 @@ let g:loaded_sleuth = 1
 
 function! s:Guess(lines) abort
   let options = {}
-  let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0}
+  let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
   let softtab = repeat(' ', 8)
   let waiting_on = ''
 
@@ -50,12 +50,17 @@ function! s:Guess(lines) abort
       let heuristics.spaces += 1
     endif
     let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
-    if indent > 1 && (indent < 4 || indent % 2 == 0) &&
+    if indent == 3
+      let heuristics.three += 1
+    elseif indent > 1 && (indent < 4 || indent % 4 == 0) &&
           \ get(options, 'shiftwidth', 99) > indent
       let options.shiftwidth = indent
     endif
   endfor
 
+  if heuristics.three && get(options, 'shiftwidth', '') !~# '^[248]$'
+    let options.shiftwidth = 3
+  endif
   if heuristics.hard && !heuristics.spaces
     return {'expandtab': 0, 'shiftwidth': 0}
   elseif heuristics.soft != heuristics.hard
