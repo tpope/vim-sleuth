@@ -8,7 +8,7 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
-function! s:Guess(lines) abort
+function! s:Guess(lines, source) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
   let softtab = repeat(' ', 8)
@@ -62,7 +62,7 @@ function! s:Guess(lines) abort
     let options.shiftwidth = 3
   endif
   if heuristics.hard && !heuristics.spaces
-    return {'expandtab': 0, 'shiftwidth': 0}
+    let options = {'expandtab': 0, 'shiftwidth': 0}
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
     if heuristics.hard
@@ -70,7 +70,7 @@ function! s:Guess(lines) abort
     endif
   endif
 
-  return options
+  return map(options, '[v:val, a:source]')
 endfunction
 
 function! s:Capture(cmd) abort
@@ -116,7 +116,7 @@ let s:modeline_numbers = {
 let s:modeline_booleans = {
       \ 'expandtab': 'expandtab', 'et': 'expandtab',
       \ }
-function! s:ModelineOptions() abort
+function! s:ModelineOptions(source) abort
   let options = {}
   if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# '\\\@<![[:space:]]nomodeline\>')
     return options
@@ -130,9 +130,9 @@ function! s:ModelineOptions() abort
   for lnum in lnums
     for option in split(matchstr(getline(lnum), '\%(\S\@<!vim\=\|\s\@<=ex\):\s*\(set\= \zs[^:]\+\|\zs.*\S\)'), '[[:space:]:]\+')
       if has_key(s:modeline_booleans, matchstr(option, '^\%(no\)\=\zs\w\+$'))
-        let options[s:modeline_booleans[matchstr(option, '^\%(no\)\=\zs\w\+')]] = option !~# '^no'
+        let options[s:modeline_booleans[matchstr(option, '^\%(no\)\=\zs\w\+')]] = [option !~# '^no', a:source, lnum]
       elseif has_key(s:modeline_numbers, matchstr(option, '^\w\+\ze=[1-9]\d*$'))
-        let options[s:modeline_numbers[matchstr(option, '^\w\+')]] = str2nr(matchstr(option, '\d\+$'))
+        let options[s:modeline_numbers[matchstr(option, '^\w\+')]] = [str2nr(matchstr(option, '\d\+$')), a:source, lnum]
       elseif option ==# 'nomodeline' || option ==# 'noml'
         return options
       endif
@@ -141,37 +141,65 @@ function! s:ModelineOptions() abort
   return options
 endfunction
 
-function! s:ApplyIfReady(options) abort
-  if !has_key(a:options, 'expandtab') || !has_key(a:options, 'shiftwidth')
-    return 0
-  else
-    if !a:options.shiftwidth && !exists('*shiftwidth')
-      let a:options.shiftwidth = get(a:options, 'tabstop', &tabstop)
+function! s:Ready(options) abort
+  return has_key(a:options, 'expandtab') && has_key(a:options, 'shiftwidth')
+endfunction
+
+function! s:Apply(detected) abort
+  let options = copy(a:detected.options)
+  if !exists('*shiftwidth') && !get(options, 'shiftwidth', [1])[0]
+    let options.shiftwidth = get(options, 'tabstop', [&tabstop])[0] + options.shiftwidth[1:-1]
+  endif
+  let msg = ''
+  for option in sort(keys(options))
+    if exists('&' . option)
+      let value = options[option]
+      call setbufvar('', '&'.option, value[0])
+      if has_key(s:modeline_booleans, option)
+        let setting = (value[0] ? '' : 'no') . option
+      else
+        let setting = option . '=' . value[0]
+      endif
+      if !&verbose
+        let msg .= ' ' . setting
+        continue
+      endif
+      if len(value) > 1
+        let file = value[1] ==# a:detected.bufname ? '%' : fnamemodify(value[1], ':~:.')
+        if len(value) > 2
+          let file .= ' line ' . value[2]
+        endif
+        echo printf(':setlocal %-13s " from %s', setting, file)
+      else
+        echo ':setlocal ' . setting
+      endif
     endif
-    for [option, value] in items(a:options)
-      call setbufvar('', '&'.option, value)
-    endfor
-    return 1
+  endfor
+  if !&verbose && !empty(msg)
+    echo ':setlocal' . msg
+  endif
+  if !s:Ready(options)
+    echohl WarningMsg
+    echo ':Sleuth failed to detect indent settings'
+    echohl NONE
   endif
 endfunction
 
 function! s:Detect() abort
-  unlet! b:sleuth_culprit
-  if &buftype ==# 'help'
-    return
-  endif
   let file = tr(expand('%:p'), exists('+shellslash') ? '\' : '/', '/')
+  let options = {}
+  let detected = {'bufname': file, 'options': options}
 
-  let options = s:ModelineOptions()
-  if s:ApplyIfReady(options)
-    let b:sleuth_culprit = file
-    return
+  let declared = s:ModelineOptions(file)
+  call extend(options, declared)
+  if s:Ready(options)
+    return detected
   endif
 
-  call extend(options, s:Guess(getline(1, 1024)), 'keep')
-  if s:ApplyIfReady(options)
-    let b:sleuth_culprit = file
-    return
+  let lines = getline(1, 1024)
+  call extend(options, s:Guess(lines, file), 'keep')
+  if s:Ready(options)
+    return detected
   endif
   let dir = fnamemodify(file, ':h')
   if dir =~# '^\a\a\+:' || !isdirectory(dir)
@@ -189,12 +217,11 @@ function! s:Detect() abort
       let last_pattern = pattern
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:Guess(readfile(neighbor, '', 256)), 'keep')
+          call extend(options, s:Guess(readfile(neighbor, '', 256), neighbor), 'keep')
           let c -= 1
         endif
-        if s:ApplyIfReady(options)
-          let b:sleuth_culprit = neighbor
-          return
+        if s:Ready(options)
+          return detected
         endif
         if c <= 0
           break
@@ -207,8 +234,22 @@ function! s:Detect() abort
     let dir = fnamemodify(dir, ':h')
   endwhile
   if has_key(options, 'shiftwidth')
-    return s:ApplyIfReady(extend({'expandtab': 1}, options))
+    let options.expandtab = [1]
+  else
+    let detected.options = declared
   endif
+  return detected
+endfunction
+
+function! s:Sleuth() abort
+  if &buftype ==# 'help'
+    echohl WarningMsg
+    echo ':Sleuth disabled for buftype=' . &buftype
+    echohl NONE
+    return
+  endif
+  let detected = s:Detect()
+  call s:Apply(detected)
 endfunction
 
 setglobal smarttab
@@ -232,8 +273,8 @@ augroup sleuth
   autocmd!
   autocmd FileType *
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | call s:Detect() | endif
+        \ | silent call s:Sleuth() | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
-command! -bar -bang Sleuth call s:Detect()
+command! -bar -bang Sleuth call s:Sleuth()

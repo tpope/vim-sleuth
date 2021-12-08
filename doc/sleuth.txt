@@ -17,6 +17,9 @@ current and parent directories.  In lieu of adjusting 'softtabstop',
                                                 *:Sleuth*
 :Sleuth                 Manually detect indentation.
 
+:verbose Sleuth         Manually detect indentation, and display what options
+                        were set and why.
+
                                                 *SleuthIndicator()*
 SleuthIndicator()       Indicator for inclusion in 'statusline'.  Or use
                         flagship.vim to have it included automatically.
