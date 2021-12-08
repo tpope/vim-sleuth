@@ -23,12 +23,12 @@ SleuthIndicator()       Indicator for inclusion in 'statusline'.  Or use
 
 SETTINGS                                     *sleuth-settings*
 
-Automatic detection of buffer options can be controlled with:
+Automatic detection of buffer options can be disabled with:
 >
-  let g:sleuth_automatic = 0
+        let g:sleuth_automatic = 0
 <
 or:
 >
-  let b:sleuth_automatic = 0
+        let b:sleuth_automatic = 0
 <
  vim:tw=78:et:ft=help:norl:
