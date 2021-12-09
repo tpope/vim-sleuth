@@ -118,7 +118,7 @@ let s:modeline_booleans = {
       \ }
 function! s:ModelineOptions() abort
   let options = {}
-  if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# "[\n ]nomodeline\\>")
+  if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# '\\\@<![[:space:]]nomodeline\>')
     return options
   endif
   let modelines = get(b:, 'sleuth_modelines', get(g:, 'sleuth_modelines', 5))
