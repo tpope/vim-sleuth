@@ -237,5 +237,3 @@ augroup sleuth
 augroup END
 
 command! -bar -bang Sleuth call s:Detect()
-
-" vim:set et sw=2:
