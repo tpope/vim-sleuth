@@ -205,7 +205,7 @@ function! s:Detect() abort
   if dir =~# '^\a\a\+:' || !isdirectory(dir)
     let dir = ''
   endif
-  let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 20))
+  let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
   let patterns = c > 0 && len(dir) ? s:PatternsFor(&filetype) : []
   call filter(patterns, 'v:val !~# "/"')
   while c > 0 && dir !~# '^$\|^//[^/]*$' && dir !=# fnamemodify(dir, ':h')
