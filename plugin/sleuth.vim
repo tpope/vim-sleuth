@@ -65,7 +65,7 @@ function! s:Guess(lines, source) abort
     let options = {'expandtab': 0, 'shiftwidth': 0}
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
-    if heuristics.hard
+    if heuristics.hard || stridx(join(a:lines, "\n"), "\t") >= 0
       let options.tabstop = 8
     endif
   endif
