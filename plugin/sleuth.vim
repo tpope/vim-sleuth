@@ -8,7 +8,7 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
-function! s:Guess(lines, source) abort
+function! s:Guess(source, lines, extra_lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
   let softtab = repeat(' ', 8)
@@ -61,12 +61,16 @@ function! s:Guess(lines, source) abort
   if heuristics.three && get(options, 'shiftwidth', '') !~# '^[248]$'
     let options.shiftwidth = 3
   endif
-  if heuristics.hard && !heuristics.spaces
+  if heuristics.hard && !heuristics.spaces &&
+        \ stridx("\n" . join(a:extra_lines, "\n"), "\n  ") < 0
     let options = {'expandtab': 0, 'shiftwidth': 0}
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
-    if heuristics.hard || stridx(join(a:lines, "\n"), "\t") >= 0
+    if heuristics.hard || stridx(join(a:extra_lines + a:lines, "\n"), "\t") >= 0
       let options.tabstop = 8
+    elseif !&g:shiftwidth && get(options, 'shiftwidth')
+      let options.tabstop = options.shiftwidth
+      let options.shiftwidth = 0
     endif
   endif
 
@@ -202,7 +206,7 @@ function! s:Detect() abort
   endif
 
   let lines = getline(1, 1024)
-  call extend(options, s:Guess(lines, file), 'keep')
+  call extend(options, s:Guess(detected.bufname, lines, []), 'keep')
   if s:Ready(options)
     return detected
   endif
@@ -222,7 +226,7 @@ function! s:Detect() abort
       let last_pattern = pattern
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:Guess(readfile(neighbor, '', 256), neighbor), 'keep')
+          call extend(options, s:Guess(neighbor, readfile(neighbor, '', 256), lines), 'keep')
           let c -= 1
         endif
         if s:Ready(options)
