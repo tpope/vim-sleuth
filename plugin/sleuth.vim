@@ -185,12 +185,17 @@ function! s:Apply(detected) abort
   endif
 endfunction
 
+let s:mandated = {
+      \ 'yaml': {'expandtab': [1]},
+      \ }
+
 function! s:Detect() abort
   let file = tr(expand('%:p'), exists('+shellslash') ? '\' : '/', '/')
   let options = {}
   let detected = {'bufname': file, 'options': options}
 
-  let declared = s:ModelineOptions(file)
+  let declared = copy(get(s:mandated, &filetype, {}))
+  call extend(declared, s:ModelineOptions(file))
   call extend(options, declared)
   if s:Ready(options)
     return detected
