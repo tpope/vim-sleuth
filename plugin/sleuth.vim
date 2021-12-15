@@ -8,7 +8,7 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
-function! s:Guess(source, lines, extra_lines) abort
+function! s:Guess(source, detected, lines, extra_lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
   let softtab = repeat(' ', 8)
@@ -74,7 +74,8 @@ function! s:Guess(source, lines, extra_lines) abort
     endif
   endif
 
-  return map(options, '[v:val, a:source]')
+  call map(options, '[v:val, a:source]')
+  call extend(a:detected.options, options, 'keep')
 endfunction
 
 function! s:Capture(cmd) abort
@@ -206,7 +207,7 @@ function! s:Detect() abort
   endif
 
   let lines = getline(1, 1024)
-  call extend(options, s:Guess(detected.bufname, lines, []), 'keep')
+  call s:Guess(detected.bufname, detected, lines, [])
   if s:Ready(options)
     return detected
   endif
@@ -226,7 +227,7 @@ function! s:Detect() abort
       let last_pattern = pattern
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call extend(options, s:Guess(neighbor, readfile(neighbor, '', 256), lines), 'keep')
+          call s:Guess(neighbor, detected, readfile(neighbor, '', 256), lines)
           let c -= 1
         endif
         if s:Ready(options)
