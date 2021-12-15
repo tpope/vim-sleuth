@@ -11,15 +11,17 @@ let g:loaded_sleuth = 1
 function! s:Guess(source, detected, lines, extra_lines) abort
   let has_heredocs = &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
-  let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
+  let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
   let tabstop = get(a:detected.options, 'tabstop', [8])[0]
   let softtab = repeat(' ', tabstop)
   let waiting_on = ''
+  let prev_indent = -1
 
   for line in a:lines
     if len(waiting_on)
       if line =~# waiting_on
         let waiting_on = ''
+        let prev_indent = -1
       endif
       continue
     elseif line =~# '^\s*$'
@@ -54,17 +56,26 @@ function! s:Guess(source, detected, lines, extra_lines) abort
     if indent > 1
       let heuristics.spaces += 1
     endif
-    if indent == 3
-      let heuristics.three += 1
-    elseif indent > 1 && (indent < 4 || indent % 4 == 0) &&
-          \ get(options, 'shiftwidth', 81) > indent
-      let options.shiftwidth = indent
+    let increment = prev_indent < 0 ? 0 : indent - prev_indent
+    let prev_indent = indent
+    if increment > 1 && (increment < 4 || increment % 4 == 0)
+      if has_key(heuristics.indents, increment)
+        let heuristics.indents[increment] += 1
+      else
+        let heuristics.indents[increment] = 1
+      endif
+      let heuristics.checked += 1
     endif
   endfor
 
-  if heuristics.three && get(options, 'shiftwidth', '') !~# '^[248]$'
-    let options.shiftwidth = 3
-  endif
+  let max_frequency = 0
+  for [shiftwidth, frequency] in items(heuristics.indents)
+    if frequency > max_frequency
+      let options.shiftwidth = +shiftwidth
+      let max_frequency = frequency
+    endif
+  endfor
+
   if heuristics.hard && !heuristics.spaces &&
         \ stridx("\n" . join(a:extra_lines, "\n"), "\n  ") < 0
     let options = {'expandtab': 0, 'shiftwidth': 0}
