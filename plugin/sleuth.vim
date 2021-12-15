@@ -11,7 +11,8 @@ let g:loaded_sleuth = 1
 function! s:Guess(source, detected, lines, extra_lines) abort
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
-  let softtab = repeat(' ', 8)
+  let tabstop = get(a:detected.options, 'tabstop', [8])[0]
+  let softtab = repeat(' ', tabstop)
   let waiting_on = ''
 
   for line in a:lines
@@ -67,7 +68,7 @@ function! s:Guess(source, detected, lines, extra_lines) abort
   elseif heuristics.soft != heuristics.hard
     let options.expandtab = heuristics.soft > heuristics.hard
     if heuristics.hard || stridx(join(a:extra_lines + a:lines, "\n"), "\t") >= 0
-      let options.tabstop = 8
+      let options.tabstop = tabstop
     elseif !&g:shiftwidth && get(options, 'shiftwidth')
       let options.tabstop = options.shiftwidth
       let options.shiftwidth = 0
