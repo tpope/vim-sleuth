@@ -41,19 +41,19 @@ function! s:Guess(source, detected, lines, extra_lines) abort
       endif
     endif
 
+    let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
     if line =~# '^\t'
       let heuristics.hard += 1
     elseif line =~# '^' . softtab
       let heuristics.soft += 1
     endif
-    if line =~# '^  '
+    if indent > 1
       let heuristics.spaces += 1
     endif
-    let indent = len(matchstr(substitute(line, '\t', softtab, 'g'), '^ *'))
     if indent == 3
       let heuristics.three += 1
     elseif indent > 1 && (indent < 4 || indent % 4 == 0) &&
-          \ get(options, 'shiftwidth', 99) > indent
+          \ get(options, 'shiftwidth', 81) > indent
       let options.shiftwidth = indent
     endif
   endfor
