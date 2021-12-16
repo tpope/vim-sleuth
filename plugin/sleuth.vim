@@ -65,11 +65,14 @@ function! s:Guess(source, detected, lines, extra_lines) abort
   if heuristics.hard && !heuristics.spaces &&
         \ stridx("\n" . join(a:extra_lines, "\n"), "\n  ") < 0
     let options = {'expandtab': 0, 'shiftwidth': 0}
-  elseif heuristics.soft != heuristics.hard
-    let options.expandtab = heuristics.soft > heuristics.hard
-    if heuristics.hard || stridx(join(a:extra_lines + a:lines, "\n"), "\t") >= 0
+  elseif heuristics.hard > heuristics.soft
+    let options.expandtab = 0
+    let options.tabstop = tabstop
+  elseif heuristics.soft
+    let options.expandtab = 1
+    if stridx(join(a:extra_lines + a:lines, "\n"), "\t") >= 0
       let options.tabstop = tabstop
-    elseif !&g:shiftwidth && get(options, 'shiftwidth')
+    elseif !&g:shiftwidth && has_key(options, 'shiftwidth')
       let options.tabstop = options.shiftwidth
       let options.shiftwidth = 0
     endif
