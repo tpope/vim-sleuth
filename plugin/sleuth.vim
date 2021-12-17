@@ -9,6 +9,7 @@ endif
 let g:loaded_sleuth = 1
 
 function! s:Guess(source, detected, lines, extra_lines) abort
+  let has_heredocs = &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'three': 0}
   let tabstop = get(a:detected.options, 'tabstop', [8])[0]
@@ -23,19 +24,21 @@ function! s:Guess(source, detected, lines, extra_lines) abort
       continue
     elseif line =~# '^\s*$'
       continue
+    elseif line =~# '^=\w' && line !~# '^=\%(end\|cut\)\>'
+      let waiting_on = '^=\%(end\|cut\)\>'
+    elseif line =~# '^@@\+ -\d\+,\d\+ '
+      let waiting_on = '^$'
+    elseif line !~# '[/<"`]'
+      " No need to do other checks
     elseif line =~# '^\s*/\*' && line !~# '\*/'
       let waiting_on = '\*/'
     elseif line =~# '^\s*<\!--' && line !~# '-->'
       let waiting_on = '-->'
     elseif line =~# '^[^"]*"""[^"]*$'
       let waiting_on = '^[^"]*"""[^"]*$'
-    elseif line =~# '^=\w' && line !~# '^=\%(end\|cut\)\>'
-      let waiting_on = '^=\%(end\|cut\)\>'
-    elseif line =~# '^@@\+ -\d\+,\d\+ '
-      let waiting_on = '^$'
     elseif &filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
-    elseif &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
+    elseif has_heredocs
       let waiting_on = matchstr(line, '<<\s*\([''"]\=\)\zs\w\+\ze\1[^''"`<>]*$')
       if len(waiting_on)
         let waiting_on = '^' . waiting_on . '$'
