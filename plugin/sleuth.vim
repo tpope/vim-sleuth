@@ -66,7 +66,7 @@ function! s:Guess(source, detected, lines, extra_lines) abort
       endif
       let heuristics.checked += 1
     endif
-    if heuristics.checked >= 32 && (heuristics.hard > 3 || heuristics.soft > 3) && heuristics.indents[increment] * 2 > heuristics.checked
+    if heuristics.checked >= 32 && (heuristics.hard > 3 || heuristics.soft > 3) && get(heuristics.indents, increment) * 2 > heuristics.checked
       if heuristics.spaces
         break
       elseif !exists('no_space_indent')
