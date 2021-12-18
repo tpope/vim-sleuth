@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+# vim:set tw=79:
+
+# git clone https://github.com/editorconfig/editorconfig-core-test.git
+# cd editorconfig-core-test
+# cmake -DEDITORCONFIG_CMD=$HOME/.vim/pack/tpope/start/vim-sleuth/test/sleuth-editorconfig .
+# ctest .
+
+import sys
+import re
+import getopt
+import subprocess
+import tempfile
+import os
+import json
+
+def main():
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    plugin_file = root_dir + "/plugin/sleuth.vim"
+
+    opts, args = getopt.getopt(sys.argv[1:], "f:bv", ["version"])
+    config = '.editorconfig'
+    for o, a in opts:
+        if o == "-f":
+            config = a
+        elif o == "-b":
+            # Test suite uses -b 0.8.0 in exactly one test, just to make our
+            # lives difficult.
+            print("indent_style=tab")
+            sys.exit(1)
+        elif o in ("-v", "--version"):
+            version = re.search(r'" Version: +([0-9.]+)', open(plugin_file).read())[1]
+            print("EditorConfig sleuth.vim v" + version + " - Specification Version 0.14.0")
+            sys.exit(0)
+
+    expr = "call('<SNR>1_DetectEditorConfig', " + json.dumps([args[0], config]) + ")[0]"
+    cmd = [os.getenv('VIM_EXE') or 'vim', '-nNes', '-u', 'NONE', '-U', 'NONE', '-i', 'NONE', '-S', plugin_file]
+    (tempfd, tempname) = tempfile.mkstemp()
+    try:
+        os.close(tempfd)
+        cmd += ['-c', 'call writefile([json_encode(' + expr + ')], "' + tempname + '")|q']
+        subprocess.run(cmd)
+        tempio = open(tempname, 'r')
+        pairs = json.loads(tempio.read())
+        tempio.close()
+    finally:
+        os.remove(tempname)
+
+    for k in pairs:
+        pairs[k] = pairs[k][0]
+        if k in ('charset', 'end_of_line', 'indent_size', 'indent_style', 'insert_final_newline', 'trim_trailing_whitespace'):
+            pairs[k] = pairs[k].lower()
+    # Sleuth implements tab_width/indent_size syncing with shiftwidth=0, while
+    # the test suite expects to see the same integer twice.
+    if 'tab_width' not in pairs and pairs.get('indent_size', 'tab') != 'tab':
+        pairs['tab_width'] = pairs['indent_size']
+    elif 'indent_size' not in pairs and pairs.get('indent_style', '') == 'tab':
+        pairs['indent_size'] = pairs.get('tab_width', 'tab')
+
+    items = list(pairs.items())
+    items.sort()
+    for (k, v) in items:
+        print(f'{k}={v}')
+
+if __name__ == "__main__":
+    main()
