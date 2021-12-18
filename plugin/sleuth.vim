@@ -178,6 +178,130 @@ function! s:ModelineOptions(source) abort
   return options
 endfunction
 
+let s:fnmatch_replacements = {
+      \ '.': '\.', '\%': '%', '\(': '(', '\)': ')', '\{': '{', '\}': '}', '\_': '_',
+      \ '?': '[^/]', '*': '[^/]*', '/**/*': '/.*', '/**/': '/\%(.*/\)\=', '**': '.*'}
+function! s:FnmatchReplace(pat) abort
+  if has_key(s:fnmatch_replacements, a:pat)
+    return s:fnmatch_replacements[a:pat]
+  elseif len(a:pat) ==# 1
+    return '\' . a:pat
+  elseif a:pat =~# '^{[+-]\=\d\+\.\.[+-]\=\d\+}$'
+    return '\%(' . join(range(matchstr(a:pat, '[+-]\=\d\+'), matchstr(a:pat, '\.\.\zs[+-]\=\d\+')), '\|') . '\)'
+  elseif a:pat =~# '^{.*\\\@<!\%(\\\\\)*,.*}$'
+    return '\%(' . substitute(a:pat[1:-2], ',\|\%(\\.\|{[^\{}]*}\|[^,]\)*', '\=submatch(0) ==# "," ? "\\|" : s:FnmatchTranslate(submatch(0))', 'g') . '\)'
+  elseif a:pat =~# '^{.*}$'
+    return '{' . s:FnmatchTranslate(a:pat[1:-2]) . '}'
+  elseif a:pat =~# '^\[!'
+    return '[^' . a:pat[2:-1]
+  else
+    return a:pat
+  endif
+endfunction
+
+function! s:FnmatchTranslate(pat) abort
+  return substitute(a:pat, '\\.\|/\*\*/\*\=\|\*\*\=\|\[[!^]\=\]\=[^]/]*\]\|{\%(\\.\|[^{}]\|{[^\{}]*}\)*}\|[?.\~^$[]', '\=s:FnmatchReplace(submatch(0))', 'g')
+endfunction
+
+function! s:ReadEditorConfig(absolute_path) abort
+  try
+    let lines = readfile(a:absolute_path)
+  catch
+    let lines = []
+  endtry
+  let prefix = '\m\C^' . escape(fnamemodify(a:absolute_path, ':h'), '][^$.*\~')
+  let preamble = {}
+  let pairs = preamble
+  let sections = []
+  let i = 0
+  while i < len(lines)
+    let line = lines[i]
+    let i += 1
+    let line = substitute(line, '^[[:space:]]*\|[[:space:]]*\%([^[:space:]]\@<![;#].*\)\=$', '', 'g')
+    let match = matchlist(line, '^\%(\[\(\%(\\.\|[^\;#]\)*\)\]\|\([^[:space:]]\@=[^;#=:]*[^;#=:[:space:]]\)[[:space:]]*[=:][[:space:]]*\(.*\)\)$')
+    if len(get(match, 2, ''))
+      let pairs[tolower(match[2])] = [match[3], a:absolute_path, i]
+    elseif len(get(match, 1, '')) && len(get(match, 1, '')) <= 4096
+      if match[1] =~# '^/'
+        let pattern = match[1]
+      elseif match[1] =~# '/'
+        let pattern = '/' . match[1]
+      else
+        let pattern = '/**/' . match[1]
+      endif
+      let pairs = {}
+      call add(sections, [prefix . s:FnmatchTranslate(pattern) . '$', pairs])
+    endif
+  endwhile
+  return [preamble, sections]
+endfunction
+
+let s:editorconfig_cache = {}
+function! s:DetectEditorConfig(absolute_path, ...) abort
+  let root = ''
+  let tail = a:0 ? '/' . a:1 : '/.editorconfig'
+  let dir = fnamemodify(a:absolute_path, ':h')
+  let previous_dir = ''
+  let sections = []
+  while dir !=# previous_dir && dir !~# '^//\%([^/]\+/\=\)\=$'
+    let read_from = dir . tail
+    let ftime = getftime(read_from)
+    let [cachetime; config] = get(s:editorconfig_cache, read_from, [-1, {}, []])
+    if ftime != cachetime
+      let config = s:ReadEditorConfig(read_from)
+      let s:editorconfig_cache[read_from] = [ftime] + config
+      lockvar! s:editorconfig_cache[read_from]
+      unlockvar s:editorconfig_cache[read_from]
+    endif
+    call extend(sections, config[1], 'keep')
+    if get(config[0], 'root', [''])[0] ==? 'true'
+      let root = dir
+      break
+    endif
+    let previous_dir = dir
+    let dir = fnamemodify(dir, ':h')
+  endwhile
+
+  let config = {}
+  for [pattern, pairs] in sections
+    if a:absolute_path =~# pattern
+      call extend(config, pairs)
+    endif
+  endfor
+
+  return [config, root]
+endfunction
+
+function! s:EditorConfigToOptions(pairs) abort
+  let options = {}
+  let pairs = map(copy(a:pairs), 'v:val[0]')
+  let sources = map(copy(a:pairs), 'v:val[1:-1]')
+  call filter(pairs, 'v:val !=? "unset"')
+
+  if get(pairs, 'indent_style', '') ==? 'tab'
+    let options.expandtab = [0] + sources.indent_style
+  elseif get(pairs, 'indent_style', '') ==? 'space'
+    let options.expandtab = [1] + sources.indent_style
+  endif
+
+  if get(pairs, 'indent_size', '') =~? '^[1-9]\d*$\|^tab$'
+    let options.shiftwidth = [str2nr(pairs.indent_size)] + sources.indent_size
+    if &g:shiftwidth == 0 && !has_key(pairs, 'tab_width') && pairs.indent_size !=? 'tab'
+      let options.tabstop = options.shiftwidth
+      let options.shiftwidth = [0] + sources.indent_size
+    endif
+  endif
+
+  if get(pairs, 'tab_width', '') =~? '^[1-9]\d*$'
+    let options.tabstop = [str2nr(pairs.tab_width)] + sources.tab_width
+    if !has_key(pairs, 'indent_size') && get(pairs, 'indent_style', '') ==? 'tab'
+      let options.shiftwidth = [0] + options.tabstop[1:-1]
+    endif
+  endif
+
+  return options
+endfunction
+
 function! s:Ready(options) abort
   return has_key(a:options, 'expandtab') && has_key(a:options, 'shiftwidth')
 endfunction
@@ -230,8 +354,14 @@ function! s:Detect() abort
   let file = tr(expand('%:p'), exists('+shellslash') ? '\' : '/', '/')
   let options = {}
   let detected = {'bufname': file, 'options': options}
+  let pre = substitute(matchstr(file, '^\a\a\+\ze:'), '^\a', '\u&', 'g')
+  if len(pre) && exists('*' . pre . 'Real')
+    let file = tr(call(pre . 'Real', [file]), exists('+shellslash') ? '\' : '/', '/')
+  endif
 
   let declared = copy(get(s:mandated, &filetype, {}))
+  let [detected.editorconfig, detected.root] = s:DetectEditorConfig(file)
+  call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
   call extend(declared, s:ModelineOptions(file))
   call extend(options, declared)
   if s:Ready(options)
@@ -244,7 +374,7 @@ function! s:Detect() abort
     return detected
   endif
   let dir = fnamemodify(file, ':h')
-  if dir =~# '^\a\a\+:' || !isdirectory(dir)
+  if detected.bufname =~# '^\a\a\+:' || !isdirectory(dir)
     let dir = ''
   endif
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
@@ -273,6 +403,9 @@ function! s:Detect() abort
         break
       endif
     endfor
+    if dir ==# detected.root
+      break
+    endif
     let dir = fnamemodify(dir, ':h')
   endwhile
   if has_key(options, 'shiftwidth')
@@ -316,6 +449,8 @@ augroup sleuth
   autocmd FileType *
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
         \ | silent call s:Sleuth() | endif
+  autocmd BufNewFile,BufReadPost .editorconfig
+        \ if &filetype =~# '^\%(conf\)\=$' | setl filetype=dosini | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
