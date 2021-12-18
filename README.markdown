@@ -31,7 +31,8 @@ support:
   the first file in a brand new Ruby project might very well be derived from
   your `.irbrc`.  I consider this a feature.
 * If your file is consistently indented with hard tabs, `'shiftwidth'` will be
-  set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 is enforced.
+  set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 is enforced, unless
+  another value is explicitly declared in a modeline or EditorConfig.
 
 ## Self-Promotion
 
