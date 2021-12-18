@@ -8,7 +8,7 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
-function! s:Guess(source, detected, lines, extra_lines) abort
+function! s:Guess(source, detected, lines) abort
   let has_heredocs = &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
@@ -88,14 +88,17 @@ function! s:Guess(source, detected, lines, extra_lines) abort
   endfor
 
   if heuristics.hard && !heuristics.spaces &&
-        \ stridx("\n" . join(a:extra_lines, "\n"), "\n  ") < 0
+        \ !has_key(a:detected.options, 'tabstop')
     let options = {'expandtab': 0, 'shiftwidth': 0}
   elseif heuristics.hard > heuristics.soft
     let options.expandtab = 0
     let options.tabstop = tabstop
-  elseif heuristics.soft
-    let options.expandtab = 1
-    if stridx(join(a:extra_lines + a:lines, "\n"), "\t") >= 0
+  else
+    if heuristics.soft
+      let options.expandtab = 1
+    endif
+    if heuristics.hard || has_key(a:detected.options, 'tabstop') ||
+          \ stridx(join(a:lines, "\n"), "\t") >= 0
       let options.tabstop = tabstop
     elseif !&g:shiftwidth && has_key(options, 'shiftwidth')
       let options.tabstop = options.shiftwidth
@@ -236,7 +239,7 @@ function! s:Detect() abort
   endif
 
   let lines = getline(1, 1024)
-  call s:Guess(detected.bufname, detected, lines, [])
+  call s:Guess(detected.bufname, detected, lines)
   if s:Ready(options)
     return detected
   endif
@@ -256,7 +259,7 @@ function! s:Detect() abort
       let last_pattern = pattern
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# expand('%:p') && filereadable(neighbor)
-          call s:Guess(neighbor, detected, readfile(neighbor, '', 256), lines)
+          call s:Guess(neighbor, detected, readfile(neighbor, '', 256))
           let c -= 1
         endif
         if s:Ready(options)
