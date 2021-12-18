@@ -26,10 +26,6 @@ support:
 
 ## Notes
 
-* Searching for other files of the same type continues up the directory
-  hierarchy until a match is found. This means, for example, the indent for
-  the first file in a brand new Ruby project might very well be derived from
-  your `.irbrc`.  I consider this a feature.
 * If your file is consistently indented with hard tabs, `'shiftwidth'` will be
   set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 is enforced, unless
   another value is explicitly declared in a modeline or EditorConfig.

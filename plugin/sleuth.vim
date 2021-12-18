@@ -399,7 +399,8 @@ function! s:Detect() abort
     return detected
   endif
   let dir = fnamemodify(file, ':h')
-  if detected.bufname =~# '^\a\a\+:' || !isdirectory(dir)
+  let root = len(detected.root) ? detected.root : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
+  if detected.bufname =~# '^\a\a\+:' || !isdirectory(root)
     let dir = ''
   endif
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
@@ -428,7 +429,7 @@ function! s:Detect() abort
         break
       endif
     endfor
-    if dir ==# detected.root
+    if len(dir) <= len(root)
       break
     endif
     let dir = fnamemodify(dir, ':h')
