@@ -159,6 +159,7 @@ endfunction
 let s:modeline_numbers = {
       \ 'shiftwidth': 'shiftwidth', 'sw': 'shiftwidth',
       \ 'tabstop': 'tabstop', 'ts': 'tabstop',
+      \ 'textwidth': 'textwidth', 'tw': 'textwidth',
       \ }
 let s:modeline_booleans = {
       \ 'expandtab': 'expandtab', 'et': 'expandtab',
@@ -309,6 +310,10 @@ function! s:EditorConfigToOptions(pairs) abort
     endif
   endif
 
+  if get(pairs, 'max_line_length', '') =~? '^[1-9]\d*$\|^off$'
+    let options.textwidth = [str2nr(pairs.max_line_length)] + sources.max_line_length
+  endif
+
   return options
 endfunction
 
@@ -457,17 +462,22 @@ endif
 function! SleuthIndicator() abort
   let sw = &shiftwidth ? &shiftwidth : &tabstop
   if &expandtab
-    return 'sw='.sw
+    let ind = 'sw='.sw
   elseif &tabstop == sw
-    return 'ts='.&tabstop
+    let ind = 'ts='.&tabstop
   else
-    return 'sw='.sw.',ts='.&tabstop
+    let ind = 'sw='.sw.',ts='.&tabstop
   endif
+  if &textwidth
+    let ind .= ',tw='.&textwidth
+  endif
+  endif
+  return ind
 endfunction
 
 augroup sleuth
   autocmd!
-  autocmd FileType *
+  autocmd FileType * nested
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
         \ | silent call s:Sleuth() | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
