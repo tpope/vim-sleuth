@@ -163,6 +163,7 @@ let s:modeline_numbers = {
       \ }
 let s:modeline_booleans = {
       \ 'expandtab': 'expandtab', 'et': 'expandtab',
+      \ 'fixendofline': 'fixendofline', 'fixeol': 'fixendofline',
       \ }
 function! s:ModelineOptions(source) abort
   let options = {}
@@ -312,6 +313,10 @@ function! s:EditorConfigToOptions(pairs) abort
 
   if get(pairs, 'max_line_length', '') =~? '^[1-9]\d*$\|^off$'
     let options.textwidth = [str2nr(pairs.max_line_length)] + sources.max_line_length
+  endif
+
+  if get(pairs, 'insert_final_newline', '') =~? '^true$\|^false$'
+    let options.fixendofline = [pairs.insert_final_newline ==? 'true'] + sources.insert_final_newline
   endif
 
   return options
@@ -471,6 +476,8 @@ function! SleuthIndicator() abort
   if &textwidth
     let ind .= ',tw='.&textwidth
   endif
+  if exists('&fixendofline') && !&fixendofline && !&endofline
+    let ind .= ',noeol'
   endif
   return ind
 endfunction
