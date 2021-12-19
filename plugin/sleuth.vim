@@ -449,8 +449,6 @@ augroup sleuth
   autocmd FileType *
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
         \ | silent call s:Sleuth() | endif
-  autocmd BufNewFile,BufReadPost .editorconfig
-        \ if &filetype =~# '^\%(conf\)\=$' | setl filetype=dosini | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
