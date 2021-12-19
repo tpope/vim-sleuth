@@ -8,6 +8,16 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
+if exists('+shellslash')
+  function! s:Slash(path) abort
+    return tr(a:path, '\', '/')
+  endfunction
+else
+  function! s:Slash(path) abort
+    return a:path
+  endfunction
+endif
+
 function! s:Guess(source, detected, lines) abort
   let has_heredocs = &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
@@ -351,12 +361,17 @@ let s:mandated = {
       \ }
 
 function! s:Detect() abort
-  let file = tr(expand('%:p'), exists('+shellslash') ? '\' : '/', '/')
+  let file = s:Slash(@%)
+  if len(&l:buftype)
+    let file = s:Slash(fnamemodify(file, ':p'))
+  elseif file !~# '^$\|^\a\+:\|^/'
+    let file = s:Slash(getcwd()) . '/' . file
+  endif
   let options = {}
   let detected = {'bufname': file, 'options': options}
   let pre = substitute(matchstr(file, '^\a\a\+\ze:'), '^\a', '\u&', 'g')
   if len(pre) && exists('*' . pre . 'Real')
-    let file = tr(call(pre . 'Real', [file]), exists('+shellslash') ? '\' : '/', '/')
+    let file = s:Slash(call(pre . 'Real', [file]))
   endif
 
   let declared = copy(get(s:mandated, &filetype, {}))
