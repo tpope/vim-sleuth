@@ -388,7 +388,7 @@ function! s:Detect() abort
       endif
       let last_pattern = pattern
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
-        if neighbor !=# expand('%:p') && filereadable(neighbor)
+        if neighbor !=# file && filereadable(neighbor)
           call s:Guess(neighbor, detected, readfile(neighbor, '', 256))
           let c -= 1
         endif
