@@ -417,9 +417,15 @@ function! s:Detect() abort
 endfunction
 
 function! s:Sleuth() abort
-  if &buftype ==# 'help'
+  if &l:buftype =~# '^\%(help\|terminal\)$'
     echohl WarningMsg
-    echo ':Sleuth disabled for buftype=' . &buftype
+    echo ':Sleuth disabled for buftype=' . &l:buftype
+    echohl NONE
+    return
+  endif
+  if &l:filetype ==# 'netrw'
+    echohl WarningMsg
+    echo ':Sleuth disabled for filetype=' . &l:filetype
     echohl NONE
     return
   endif
