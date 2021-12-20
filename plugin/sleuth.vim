@@ -63,7 +63,7 @@ function! s:Guess(source, detected, lines) abort
     elseif line =~# '^' . softtab
       let heuristics.soft += 1
     endif
-    if indent > 1
+    if line =~# '^  '
       let heuristics.spaces += 1
     endif
     let increment = prev_indent < 0 ? 0 : indent - prev_indent
