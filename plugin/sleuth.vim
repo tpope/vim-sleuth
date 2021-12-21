@@ -460,8 +460,10 @@ endfunction
 
 setglobal smarttab
 
-if !exists('g:did_indent_on')
+if !exists('g:did_indent_on') && !get(g:, 'sleuth_no_filetype_indent_on')
   filetype indent on
+elseif !exists('g:did_load_filetypes')
+  filetype on
 endif
 
 function! SleuthIndicator() abort

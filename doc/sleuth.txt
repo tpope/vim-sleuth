@@ -24,9 +24,13 @@ consulted.  In lieu of adjusting 'softtabstop', 'smarttab' is enabled.
 SleuthIndicator()       Indicator for inclusion in 'statusline'.  Or use
                         flagship.vim to have it included automatically.
 
-SETTINGS                                     *sleuth-settings*
+CONFIGURATION                                   *sleuth-configuration*
 
-Automatic detection of buffer options can be disabled with:
+To override detection and force options for a particular buffer, use a
+|modeline| or EditorConfig (https://editorconfig.org/).
+
+                                                *g:sleuth_automatic*
+Automatic detection of buffer options can be disabled entirely with:
 >
         let g:sleuth_automatic = 0
 <
@@ -34,7 +38,10 @@ or:
 >
         let b:sleuth_automatic = 0
 <
-To force settings for a particular file, use a |modeline| or EditorConfig
-(https://editorconfig.org/).
-
+                                                *g:sleuth_no_filetype_indent_on*
+Sleuth forces |:filetype-indent-on| by default, which enables file-type
+specific indenting algorithms and is highly recommended. To opt out:
+>
+        let g:sleuth_no_filetype_indent_on = 1
+<
  vim:tw=78:et:ft=help:norl:
