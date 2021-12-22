@@ -322,8 +322,8 @@ function! s:EditorConfigToOptions(pairs) abort
   return options
 endfunction
 
-function! s:Ready(options) abort
-  return has_key(a:options, 'expandtab') && has_key(a:options, 'shiftwidth')
+function! s:Ready(detected) abort
+  return has_key(a:detected.options, 'expandtab') && has_key(a:detected.options, 'shiftwidth')
 endfunction
 
 function! s:Apply(detected) abort
@@ -389,13 +389,13 @@ function! s:Detect() abort
   call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
   call extend(declared, s:ModelineOptions(file))
   call extend(options, declared)
-  if s:Ready(options)
+  if s:Ready(detected)
     return detected
   endif
 
   let lines = getline(1, 1024)
   call s:Guess(detected.bufname, detected, lines)
-  if s:Ready(options)
+  if s:Ready(detected)
     return detected
   endif
   let dir = fnamemodify(file, ':h')
@@ -417,7 +417,7 @@ function! s:Detect() abort
           call s:Guess(neighbor, detected, readfile(neighbor, '', 256))
           let c -= 1
         endif
-        if s:Ready(options)
+        if s:Ready(detected)
           return detected
         endif
         if c <= 0
