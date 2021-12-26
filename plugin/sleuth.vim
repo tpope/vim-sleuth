@@ -372,9 +372,8 @@ let s:mandated = {
 
 function! s:Detect() abort
   let file = s:Slash(@%)
-  if len(&l:buftype)
-    let file = s:Slash(fnamemodify(file, ':p'))
-  elseif file !~# '^$\|^\a\+:\|^/'
+  let actual_path = !empty(file) && &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
+  if actual_path && file !~# '^$\|^\a\+:\|^/'
     let file = s:Slash(getcwd()) . '/' . file
   endif
   let options = {}
@@ -385,7 +384,7 @@ function! s:Detect() abort
   endif
 
   let declared = copy(get(s:mandated, &filetype, {}))
-  let [detected.editorconfig, detected.root] = s:DetectEditorConfig(file)
+  let [detected.editorconfig, detected.root] = actual_path ? s:DetectEditorConfig(file) : [{}, '']
   call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
   call extend(declared, s:ModelineOptions(file))
   call extend(options, declared)
@@ -398,9 +397,9 @@ function! s:Detect() abort
   if s:Ready(detected)
     return detected
   endif
-  let dir = fnamemodify(file, ':h')
+  let dir = actual_path ? fnamemodify(file, ':h') : ''
   let root = len(detected.root) ? detected.root : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
-  if detected.bufname =~# '^\a\a\+:' || !isdirectory(root)
+  if detected.bufname =~# '^\a\a\+:' || root ==# '.' || !isdirectory(root)
     let dir = ''
   endif
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
@@ -443,7 +442,7 @@ function! s:Detect() abort
 endfunction
 
 function! s:Sleuth() abort
-  if &l:buftype =~# '^\%(help\|terminal\)$'
+  if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
     echohl WarningMsg
     echo ':Sleuth disabled for buftype=' . &l:buftype
     echohl NONE
