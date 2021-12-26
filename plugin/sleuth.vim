@@ -89,6 +89,8 @@ function! s:Guess(source, detected, lines) abort
     endif
   endfor
 
+  let a:detected.heuristics[a:source] = heuristics
+
   let max_frequency = 0
   for [shiftwidth, frequency] in items(heuristics.indents)
     if frequency > max_frequency
@@ -377,13 +379,14 @@ function! s:Detect() abort
     let file = s:Slash(getcwd()) . '/' . file
   endif
   let options = {}
-  let detected = {'bufname': file, 'options': options}
+  let detected = {'bufname': file, 'options': options, 'heuristics': {}}
   let pre = substitute(matchstr(file, '^\a\a\+\ze:'), '^\a', '\u&', 'g')
   if len(pre) && exists('*' . pre . 'Real')
     let file = s:Slash(call(pre . 'Real', [file]))
   endif
 
   let declared = copy(get(s:mandated, &filetype, {}))
+  let detected.declared = declared
   let [detected.editorconfig, detected.root] = actual_path ? s:DetectEditorConfig(file) : [{}, '']
   call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
   call extend(declared, s:ModelineOptions(file))
