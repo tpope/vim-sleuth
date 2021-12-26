@@ -359,7 +359,7 @@ function! s:Apply(detected) abort
   if !&verbose && !empty(msg)
     echo ':setlocal' . msg
   endif
-  if !s:Ready(options)
+  if !s:Ready(a:detected)
     echohl WarningMsg
     echo ':Sleuth failed to detect indent settings'
     echohl NONE
