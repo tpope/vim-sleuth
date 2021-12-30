@@ -258,15 +258,15 @@ function! s:DetectEditorConfig(absolute_path, ...) abort
   while dir !=# previous_dir && dir !~# '^//\%([^/]\+/\=\)\=$'
     let read_from = dir . tail
     let ftime = getftime(read_from)
-    let [cachetime; config] = get(s:editorconfig_cache, read_from, [-1, {}, []])
+    let [cachetime; econfig] = get(s:editorconfig_cache, read_from, [-1, {}, []])
     if ftime != cachetime
-      let config = s:ReadEditorConfig(read_from)
-      let s:editorconfig_cache[read_from] = [ftime] + config
+      let econfig = s:ReadEditorConfig(read_from)
+      let s:editorconfig_cache[read_from] = [ftime] + econfig
       lockvar! s:editorconfig_cache[read_from]
       unlockvar s:editorconfig_cache[read_from]
     endif
-    call extend(sections, config[1], 'keep')
-    if get(config[0], 'root', [''])[0] ==? 'true'
+    call extend(sections, econfig[1], 'keep')
+    if get(econfig[0], 'root', [''])[0] ==? 'true'
       let root = dir
       break
     endif
