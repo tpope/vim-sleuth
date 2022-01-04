@@ -437,7 +437,7 @@ function! s:Detect() abort
     let dir = fnamemodify(dir, ':h')
   endwhile
   if has_key(options, 'shiftwidth')
-    let options.expandtab = [1]
+    let options.expandtab = [stridx(join(lines, "\n"), "\t") == -1, detected.bufname]
   else
     let detected.options = declared
   endif
