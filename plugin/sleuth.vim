@@ -129,35 +129,6 @@ function! s:Capture(cmd) abort
   return capture
 endfunction
 
-function! s:PatternsFor(type) abort
-  if a:type ==# ''
-    return []
-  endif
-  if !exists('s:patterns')
-    let capture = s:Capture('autocmd BufRead')
-    let patterns = {
-          \ 'c': ['*.c', '*.h'],
-          \ 'cpp': ['*.cpp', '*.h'],
-          \ 'html': ['*.html'],
-          \ 'sh': ['*.sh'],
-          \ 'vim': ['vimrc', '.vimrc', '_vimrc'],
-          \ }
-    let setfpattern = '\s\+\%(setf\%[iletype]\s\+\|set\%[local]\s\+\%(ft\|filetype\)=\|call SetFileTypeSH(["'']\%(ba\|k\)\=\%(sh\)\@=\)'
-    for line in split(capture, "\n")
-      let match = matchlist(line, '^\s*\(\S\+\)\='.setfpattern.'\(\w\+\)')
-      if !empty(match)
-        call extend(patterns, {match[2]: []}, 'keep')
-        call extend(patterns[match[2]], [match[1] ==# '' ? last : match[1]])
-      endif
-      let last = matchstr(line, '\S.*')
-    endfor
-    let patterns.markdown = []
-    call map(patterns, 'sort(v:val)')
-    let s:patterns = patterns
-  endif
-  return copy(get(s:patterns, a:type, []))
-endfunction
-
 let s:modeline_numbers = {
       \ 'shiftwidth': 'shiftwidth', 'sw': 'shiftwidth',
       \ 'tabstop': 'tabstop', 'ts': 'tabstop',
@@ -406,15 +377,17 @@ function! s:Detect() abort
     let dir = ''
   endif
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
-  let patterns = c > 0 && len(dir) ? s:PatternsFor(&filetype) : []
-  call filter(patterns, 'v:val !~# "/"')
+  if c <= 0 || empty(dir)
+    let detected.patterns = []
+  else
+    let detected.patterns = ['*' . matchstr(file, '/\@<!\.[^./]\+$')]
+    if detected.patterns ==# ['*']
+      let detected.patterns = [matchstr(file, '[^/]\+\ze/\=$')]
+      let dir = fnamemodify(dir, ':h')
+    endif
+  endif
   while c > 0 && dir !~# '^$\|^//[^/]*$' && dir !=# fnamemodify(dir, ':h')
-    let last_pattern = ''
-    for pattern in patterns
-      if pattern ==# last_pattern
-        continue
-      endif
-      let last_pattern = pattern
+    for pattern in detected.patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
         if neighbor !=# file && filereadable(neighbor)
           call s:Guess(neighbor, detected, readfile(neighbor, '', 256))
