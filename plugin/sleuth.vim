@@ -349,10 +349,6 @@ function! s:Apply(detected) abort
   endif
 endfunction
 
-let s:mandated = {
-      \ 'yaml': {'expandtab': [1]},
-      \ }
-
 function! s:Detect() abort
   let file = s:Slash(@%)
   let actual_path = !empty(file) && &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
@@ -366,7 +362,7 @@ function! s:Detect() abort
     let file = s:Slash(call(pre . 'Real', [file]))
   endif
 
-  let declared = copy(get(s:mandated, &filetype, {}))
+  let declared = {}
   let detected.declared = declared
   let [detected.editorconfig, detected.root] = actual_path ? s:DetectEditorConfig(file) : [{}, '']
   call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
@@ -379,6 +375,9 @@ function! s:Detect() abort
   let lines = getline(1, 1024)
   call s:Guess(detected.bufname, detected, lines)
   if s:Ready(detected)
+    return detected
+  elseif get(options, 'shiftwidth', [4])[0] < 4 && stridx(join(lines, "\n"), "\t") == -1
+    let options.expandtab = [1, detected.bufname]
     return detected
   endif
   let dir = actual_path ? fnamemodify(file, ':h') : ''
