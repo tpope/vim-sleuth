@@ -93,7 +93,7 @@ function! s:Guess(source, detected, lines) abort
 
   let max_frequency = 0
   for [shiftwidth, frequency] in items(heuristics.indents)
-    if frequency > max_frequency
+    if frequency > max_frequency || frequency == max_frequency && +shiftwidth < get(options, 'shiftwidth')
       let options.shiftwidth = +shiftwidth
       let max_frequency = frequency
     endif
