@@ -22,21 +22,28 @@ function! s:Guess(source, detected, lines) abort
   let ext = matchstr(a:source, '\.\zs[^./]\+$')
   let has_heredocs = ext =~# '^\%(p[lm]\|php\|ruby\|sh\)$' ||
         \ get(a:lines, 0, '') =~# '^#!.*\<\%(perl\|php\|ruby\|[cz]\=sh\|bash\)$\>'
+  let is_python = ext ==# 'py' || get(a:lines, 0, '') =~# '^#!.*\<python\d\=\>'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
   let tabstop = get(a:detected.options, 'tabstop', [8])[0]
   let softtab = repeat(' ', tabstop)
   let waiting_on = ''
   let prev_indent = -1
+  let prev_line = ''
 
   for line in a:lines
     if len(waiting_on)
       if line =~# waiting_on
         let waiting_on = ''
         let prev_indent = -1
+        let prev_line = ''
       endif
       continue
     elseif line =~# '^\s*$'
+      continue
+    elseif is_python && prev_line[1:-1] =~# '[[\({]'
+      let prev_indent = -1
+      let prev_line = ''
       continue
     elseif line =~# '^=\w' && line !~# '^=\%(end\|cut\)\>'
       let waiting_on = '^=\%(end\|cut\)\>'
@@ -70,6 +77,7 @@ function! s:Guess(source, detected, lines) abort
     endif
     let increment = prev_indent < 0 ? 0 : indent - prev_indent
     let prev_indent = indent
+    let prev_line = line
     if increment > 1 && (increment < 4 || increment % 4 == 0)
       if has_key(heuristics.indents, increment)
         let heuristics.indents[increment] += 1
