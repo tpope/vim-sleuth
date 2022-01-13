@@ -19,7 +19,9 @@ else
 endif
 
 function! s:Guess(source, detected, lines) abort
-  let has_heredocs = &filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
+  let ext = matchstr(a:source, '\.\zs[^./]\+$')
+  let has_heredocs = ext =~# '^\%(p[lm]\|php\|ruby\|sh\)$' ||
+        \ get(a:lines, 0, '') =~# '^#!.*\<\%(perl\|php\|ruby\|[cz]\=sh\|bash\)$\>'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
   let tabstop = get(a:detected.options, 'tabstop', [8])[0]
@@ -48,7 +50,7 @@ function! s:Guess(source, detected, lines) abort
       let waiting_on = '-->'
     elseif line =~# '^[^"]*"""[^"]*$'
       let waiting_on = '^[^"]*"""[^"]*$'
-    elseif &filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
+    elseif ext ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
     elseif has_heredocs
       let waiting_on = matchstr(line, '<<\s*\([''"]\=\)\zs\w\+\ze\1[^''"`<>]*$')
