@@ -309,6 +309,8 @@ function! s:Ready(detected) abort
   return has_key(a:detected.options, 'expandtab') && has_key(a:detected.options, 'shiftwidth')
 endfunction
 
+let s:booleans = {'expandtab': 1, 'fixendofline': 1}
+
 function! s:Apply(detected) abort
   let options = copy(a:detected.options)
   if !exists('*shiftwidth') && !get(options, 'shiftwidth', [1])[0]
@@ -319,7 +321,7 @@ function! s:Apply(detected) abort
     if exists('&' . option)
       let value = options[option]
       call setbufvar('', '&'.option, value[0])
-      if has_key(s:modeline_booleans, option)
+      if has_key(s:booleans, option)
         let setting = (value[0] ? '' : 'no') . option
       else
         let setting = option . '=' . value[0]
