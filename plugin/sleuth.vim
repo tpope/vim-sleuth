@@ -318,27 +318,28 @@ function! s:Apply(detected) abort
   endif
   let msg = ''
   for option in sort(keys(options))
-    if exists('&' . option)
-      let value = options[option]
-      call setbufvar('', '&'.option, value[0])
-      if has_key(s:booleans, option)
-        let setting = (value[0] ? '' : 'no') . option
-      else
-        let setting = option . '=' . value[0]
+    if !exists('&' . option)
+      continue
+    endif
+    let value = options[option]
+    call setbufvar('', '&'.option, value[0])
+    if has_key(s:booleans, option)
+      let setting = (value[0] ? '' : 'no') . option
+    else
+      let setting = option . '=' . value[0]
+    endif
+    if !&verbose
+      let msg .= ' ' . setting
+      continue
+    endif
+    if len(value) > 1
+      let file = value[1] ==# a:detected.bufname ? '%' : fnamemodify(value[1], ':~:.')
+      if len(value) > 2
+        let file .= ' line ' . value[2]
       endif
-      if !&verbose
-        let msg .= ' ' . setting
-        continue
-      endif
-      if len(value) > 1
-        let file = value[1] ==# a:detected.bufname ? '%' : fnamemodify(value[1], ':~:.')
-        if len(value) > 2
-          let file .= ' line ' . value[2]
-        endif
-        echo printf(':setlocal %-13s " from %s', setting, file)
-      else
-        echo ':setlocal ' . setting
-      endif
+      echo printf(':setlocal %-13s " from %s', setting, file)
+    else
+      echo ':setlocal ' . setting
     endif
   endfor
   if !&verbose && !empty(msg)
