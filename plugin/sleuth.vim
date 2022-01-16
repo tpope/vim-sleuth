@@ -428,7 +428,7 @@ function! s:Detect() abort
   return detected
 endfunction
 
-function! s:Sleuth() abort
+function! s:Init() abort
   if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
     echohl WarningMsg
     echo ':Sleuth disabled for buftype=' . &l:buftype
@@ -443,6 +443,11 @@ function! s:Sleuth() abort
   endif
   let detected = s:Detect()
   call s:Apply(detected)
+endfunction
+
+function! s:Sleuth(line1, line2, range, bang, mods, args) abort
+  call s:Init()
+  return ''
 endfunction
 
 setglobal smarttab
@@ -475,8 +480,8 @@ augroup sleuth
   autocmd!
   autocmd FileType * nested
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | silent call s:Sleuth() | endif
+        \ | silent call s:Init() | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
-command! -bar -bang Sleuth call s:Sleuth()
+command! -bar -bang Sleuth exe s:Sleuth(<line1>, <count>, +"<range>", <bang>0, "<mods>", <q-args>)
