@@ -452,6 +452,9 @@ function! s:Sleuth(line1, line2, range, bang, mods, args) abort
 endfunction
 
 setglobal smarttab
+if exists('*fixendofline')
+  setglobal nofixendofline
+endif
 
 if !exists('g:did_indent_on') && !get(g:, 'sleuth_no_filetype_indent_on')
   filetype indent on
