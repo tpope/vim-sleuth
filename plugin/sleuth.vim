@@ -452,7 +452,7 @@ function! s:Sleuth(line1, line2, range, bang, mods, args) abort
 endfunction
 
 setglobal smarttab
-if exists('*fixendofline')
+if exists('&fixendofline')
   setglobal nofixendofline
 endif
 
