@@ -160,7 +160,6 @@ let s:modeline_numbers = {
       \ }
 let s:modeline_booleans = {
       \ 'expandtab': 'expandtab', 'et': 'expandtab',
-      \ 'fixendofline': 'fixendofline', 'fixeol': 'fixendofline',
       \ }
 function! s:ModelineOptions(source) abort
   let options = {}
@@ -281,6 +280,20 @@ function! s:DetectEditorConfig(absolute_path, ...) abort
   return [config, root]
 endfunction
 
+let s:editorconfig_bomb = {
+      \ 'utf-8':     0,
+      \ 'utf-8-bom': 1,
+      \ 'utf-16be':  1,
+      \ 'utf-16le':  1,
+      \ 'latin1':    0,
+      \ }
+
+let s:editorconfig_fileformat = {
+      \ 'cr':   'mac',
+      \ 'crlf': 'dos',
+      \ 'lf':   'unix',
+      \ }
+
 function! s:EditorConfigToOptions(pairs) abort
   let options = {}
   let pairs = map(copy(a:pairs), 'v:val[0]')
@@ -313,7 +326,18 @@ function! s:EditorConfigToOptions(pairs) abort
   endif
 
   if get(pairs, 'insert_final_newline', '') =~? '^true$\|^false$'
-    let options.fixendofline = [pairs.insert_final_newline ==? 'true'] + sources.insert_final_newline
+    let options.endofline = [pairs.insert_final_newline ==? 'true'] + sources.insert_final_newline
+  endif
+
+  let eol = tolower(get(pairs, 'end_of_line', ''))
+  if has_key(s:editorconfig_fileformat, eol)
+    let options.fileformat = [s:editorconfig_fileformat[eol]] + sources.end_of_line
+  endif
+
+  let charset = tolower(get(pairs, 'charset', ''))
+  if has_key(s:editorconfig_bomb, charset)
+    let options.bomb = [s:editorconfig_bomb[charset]] + sources.charset
+    let options.fileencoding = [substitute(charset, '\C-bom$', '', '')] + sources.charset
   endif
 
   return options
@@ -323,24 +347,29 @@ function! s:Ready(detected) abort
   return has_key(a:detected.options, 'expandtab') && has_key(a:detected.options, 'shiftwidth')
 endfunction
 
-let s:booleans = {'expandtab': 1, 'fixendofline': 1}
+let s:booleans = {'expandtab': 1, 'endofline': 1, 'bomb': 1}
+let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth']
+let s:all_options = s:safe_options + ['endofline', 'fileformat', 'fileencoding', 'bomb']
 
-function! s:Apply(detected) abort
+function! s:Apply(detected, safe_only) abort
   let options = copy(a:detected.options)
   if !exists('*shiftwidth') && !get(options, 'shiftwidth', [1])[0]
     let options.shiftwidth = get(options, 'tabstop', [&tabstop])[0] + options.shiftwidth[1:-1]
   endif
   let msg = ''
-  for option in sort(keys(options))
-    if !exists('&' . option)
+  for option in a:safe_only ? s:safe_options : s:all_options
+    if !exists('&' . option) || !has_key(options, option) ||
+          \ !&l:modifiable && index(s:safe_options, options) == -1
       continue
     endif
     let value = options[option]
-    call setbufvar('', '&'.option, value[0])
     if has_key(s:booleans, option)
       let setting = (value[0] ? '' : 'no') . option
     else
       let setting = option . '=' . value[0]
+    endif
+    if getbufvar('', '&' . option) !=# value[0] || index(s:safe_options, option) >= 0
+      exe 'setlocal ' . setting
     endif
     if !&verbose
       let msg .= ' ' . setting
@@ -351,7 +380,7 @@ function! s:Apply(detected) abort
       if len(value) > 2
         let file .= ' line ' . value[2]
       endif
-      echo printf(':setlocal %-13s " from %s', setting, file)
+      echo printf(':setlocal %-21s " from %s', setting, file)
     else
       echo ':setlocal ' . setting
     endif
@@ -441,15 +470,15 @@ function! s:Detect() abort
   return detected
 endfunction
 
-function! s:Init() abort
+function! s:Init(safe_only) abort
   if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
     return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
   endif
   if &l:filetype ==# 'netrw'
     return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
   endif
-  let detected = s:Detect()
-  call s:Apply(detected)
+  let b:sleuth = s:Detect()
+  call s:Apply(b:sleuth, a:safe_only)
   if exists('s:polyglot')
     call s:Warn('Charlatan :Sleuth implementation in vim-polyglot has been found and disabled.')
     call s:Warn('To get rid of this message, uninstall vim-polyglot, or disable the')
@@ -459,7 +488,7 @@ function! s:Init() abort
 endfunction
 
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
-  call s:Init()
+  call s:Init(a:bang)
   return ''
 endfunction
 
@@ -494,9 +523,11 @@ endfunction
 
 augroup sleuth
   autocmd!
-  autocmd FileType * nested
+  autocmd BufNewFile,BufReadPost,BufFilePost * nested
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | silent call s:Init() | endif
+        \ | silent call s:Init(0) | endif
+  autocmd FileType * nested
+        \ if exists('b:sleuth') | silent call s:Apply(b:sleuth, 1) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 

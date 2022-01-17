@@ -5,7 +5,9 @@ heuristically based on the current file, or, in the case the current file is
 new, blank, or otherwise insufficient, by looking at other files of the same
 type in the current and parent directories.  In lieu of adjusting
 `'softtabstop'`, `'smarttab'` is enabled.  Modelines and [EditorConfig][] are
-also consulted, with support for a few additional options like `'textwidth'`.
+also consulted, adding `'tabstop'`, `'textwidth'`, `'endofline'`,
+`'fileformat'`, `'fileencoding'`, and `'bomb'` to the list of supported
+options.
 
 Compare to [DetectIndent][].  I wrote this because I wanted something fully
 automatic.  My goal is that by installing this plugin, you can remove all

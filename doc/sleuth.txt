@@ -8,11 +8,33 @@ This plugin is only available if 'compatible' is not set.
 
 SUMMARY                                         *sleuth*
 
-This plugin automatically adjusts 'shiftwidth' and 'expandtab' heuristically
-based on the current file, or, in the case the current file is new, blank, or
-otherwise insufficient, by looking at other files of the same type in the
-current and parent directories.  Modelines and EditorConfig are also
-consulted.  In lieu of adjusting 'softtabstop', 'smarttab' is enabled.
+Automatic detection happens on the |BufNewFile|, |BufReadPost|, and
+|BufFilePost| events.  Sleuth first consults modelines, then EditorConfig
+(https://editorconfig.org) files.  If neither of these produces a value for
+'expandtab' and 'shiftwidth', a heuristic algorithm is used to guess them.
+
+The full list of detected options is as follows:
+
+Vim Option     Safe?  EditorConfig key ~
+'expandtab'        Y  indent_style
+'shiftwidth'       Y  indent_size
+'tabstop'          Y  tab_width
+'textwidth'        Y  max_line_length
+'endofline'           insert_final_newline
+'fileformat'          end_of_line
+'fileencoding'        charset
+'bomb'                charset
+
+Options marked "safe" are those guaranteed not to toggle 'modified'.  These
+are the only options that will be set in 'nomodifiable' buffers, and the only
+options that Sleuth will detect in a modeline.  Safe options will also be
+reapplied on every |FileType| event, so that they can override any |ftplugin|
+settings.
+
+Sleuth globally sets 'smarttab' (to avoid the need to set 'softtabstop') and
+'nofixendofline' (so that 'endofline' can take effect).
+
+INTERFACE                                       *sleuth-interface*
 
                                                 *:Sleuth*
 :Sleuth                 Manually detect indentation.
