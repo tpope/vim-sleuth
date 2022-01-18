@@ -8,6 +8,12 @@ if exists("g:loaded_sleuth") || v:version < 700 || &cp
 endif
 let g:loaded_sleuth = 1
 
+function! s:Warn(msg) abort
+  echohl WarningMsg
+  echo a:msg
+  echohl NONE
+endfunction
+
 if exists('+shellslash')
   function! s:Slash(path) abort
     return tr(a:path, '\', '/')
@@ -346,9 +352,7 @@ function! s:Apply(detected) abort
     echo ':setlocal' . msg
   endif
   if !s:Ready(a:detected)
-    echohl WarningMsg
-    echo ':Sleuth failed to detect indent settings'
-    echohl NONE
+    call s:Warn(':Sleuth failed to detect indent settings')
   endif
 endfunction
 
@@ -431,16 +435,10 @@ endfunction
 
 function! s:Init() abort
   if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
-    echohl WarningMsg
-    echo ':Sleuth disabled for buftype=' . &l:buftype
-    echohl NONE
-    return
+    return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
   endif
   if &l:filetype ==# 'netrw'
-    echohl WarningMsg
-    echo ':Sleuth disabled for filetype=' . &l:filetype
-    echohl NONE
-    return
+    return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
   endif
   let detected = s:Detect()
   call s:Apply(detected)
