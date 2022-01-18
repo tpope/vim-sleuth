@@ -3,10 +3,18 @@
 " Version:      1.3
 " GetLatestVimScripts: 4375 1 :AutoInstall: sleuth.vim
 
+if exists("#polyglot-sleuth")
+  autocmd! polyglot-sleuth
+  augroup! polyglot-sleuth
+  unlet! g:loaded_sleuth
+  let s:polyglot = 1
+endif
+
 if exists("g:loaded_sleuth") || v:version < 700 || &cp
   finish
 endif
 let g:loaded_sleuth = 1
+lockvar g:loaded_sleuth
 
 function! s:Warn(msg) abort
   echohl WarningMsg
@@ -442,6 +450,12 @@ function! s:Init() abort
   endif
   let detected = s:Detect()
   call s:Apply(detected)
+  if exists('s:polyglot')
+    call s:Warn('Charlatan :Sleuth implementation in vim-polyglot has been found and disabled.')
+    call s:Warn('To get rid of this message, uninstall vim-polyglot, or disable the')
+    call s:Warn('corresponding feature in your vimrc:')
+    call s:Warn('        let g:polyglot_disabled = ["autoindent"]')
+  endif
 endfunction
 
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
