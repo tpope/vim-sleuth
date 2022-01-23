@@ -433,10 +433,13 @@ function! s:Detect() abort
   if c <= 0 || empty(dir)
     let detected.patterns = []
   else
-    let detected.patterns = ['*' . matchstr(file, '/\@<!\.[^./]\+$')]
+    let detected.patterns = ['*' . matchstr(file, '/\@<!\.[^][{}*?$~\`./]\+$')]
     if detected.patterns ==# ['*']
-      let detected.patterns = [matchstr(file, '[^/]\+\ze/\=$')]
+      let detected.patterns = [matchstr(file, '/\zs[^][{}*?$~\`/]\+\ze/\=$')]
       let dir = fnamemodify(dir, ':h')
+      if empty(detected.patterns[0])
+        let detected.patterns = []
+      endif
     endif
   endif
   while c > 0 && dir !~# '^$\|^//[^/]*$' && dir !=# fnamemodify(dir, ':h')
