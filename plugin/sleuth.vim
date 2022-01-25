@@ -526,8 +526,11 @@ endfunction
 
 augroup sleuth
   autocmd!
-  autocmd BufNewFile,BufReadPost,BufFilePost * nested
+  autocmd BufNewFile,BufReadPost * nested
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
+        \ | silent call s:Init(0) | endif
+  autocmd BufFilePost * nested
+        \ if (@% !~# '^!' || exists('b:sleuth')) && get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
         \ | silent call s:Init(0) | endif
   autocmd FileType * nested
         \ if exists('b:sleuth') | silent call s:Apply(b:sleuth, 1) | endif
