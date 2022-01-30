@@ -31,6 +31,9 @@ options that Sleuth will detect in a modeline.  Safe options will also be
 reapplied on every |FileType| event, so that they can override any |ftplugin|
 settings.
 
+During automatic detection, Sleuth will additionally set 'filetype' if found
+in a modeline.  This won't happen if |:Sleuth| is invoked manually.
+
 Sleuth globally sets 'smarttab' (to avoid the need to set 'softtabstop') and
 'nofixendofline' (so that 'endofline' can take effect).
 

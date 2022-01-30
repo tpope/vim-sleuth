@@ -178,6 +178,8 @@ function! s:ModelineOptions(source) abort
         let options[s:modeline_booleans[matchstr(option, '^\%(no\)\=\zs\w\+')]] = [option !~# '^no', a:source, lnum]
       elseif has_key(s:modeline_numbers, matchstr(option, '^\w\+\ze=[1-9]\d*$'))
         let options[s:modeline_numbers[matchstr(option, '^\w\+')]] = [str2nr(matchstr(option, '\d\+$')), a:source, lnum]
+      elseif option =~# '^\%(ft\|filetype\)=[[:alnum:]._-]*$'
+        let options.filetype = [matchstr(option, '=\zs.*'), a:source, lnum]
       elseif option ==# 'nomodeline' || option ==# 'noml'
         return options
       endif
@@ -351,15 +353,15 @@ let s:booleans = {'expandtab': 1, 'endofline': 1, 'bomb': 1}
 let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth']
 let s:all_options = s:safe_options + ['endofline', 'fileformat', 'fileencoding', 'bomb']
 
-function! s:Apply(detected, safe_only) abort
+function! s:Apply(detected, permitted_options) abort
   let options = copy(a:detected.options)
   if !exists('*shiftwidth') && !get(options, 'shiftwidth', [1])[0]
     let options.shiftwidth = get(options, 'tabstop', [&tabstop])[0] + options.shiftwidth[1:-1]
   endif
   let msg = ''
-  for option in a:safe_only ? s:safe_options : s:all_options
+  for option in a:permitted_options
     if !exists('&' . option) || !has_key(options, option) ||
-          \ !&l:modifiable && index(s:safe_options, option) == -1
+          \ !&l:modifiable && index(['filetype'] + s:safe_options, option) == -1
       continue
     endif
     let value = options[option]
@@ -473,15 +475,17 @@ function! s:Detect() abort
   return detected
 endfunction
 
-function! s:Init(safe_only) abort
+function! s:Init(permitted_options) abort
+  unlet! b:sleuth
   if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
     return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
   endif
   if &l:filetype ==# 'netrw'
     return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
   endif
-  let b:sleuth = s:Detect()
-  call s:Apply(b:sleuth, a:safe_only)
+  let detected = s:Detect()
+  call s:Apply(detected, a:permitted_options)
+  let b:sleuth = detected
   if exists('s:polyglot')
     call s:Warn('Charlatan :Sleuth implementation in vim-polyglot has been found and disabled.')
     call s:Warn('To get rid of this message, uninstall vim-polyglot, or disable the')
@@ -490,8 +494,17 @@ function! s:Init(safe_only) abort
   endif
 endfunction
 
+function! s:AutoInit() abort
+  if get(g:, 'sleuth_modeline_filetype', 1)
+    let options = ['filetype'] + s:all_options
+  else
+    let options = s:all_options
+  endif
+  silent call s:Init(options)
+endfunction
+
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
-  call s:Init(a:bang)
+  call s:Init(a:bang ? s:safe_options : s:all_options)
   return ''
 endfunction
 
@@ -528,12 +541,12 @@ augroup sleuth
   autocmd!
   autocmd BufNewFile,BufReadPost * nested
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | silent call s:Init(0) | endif
+        \ | call s:AutoInit() | endif
   autocmd BufFilePost * nested
         \ if (@% !~# '^!' || exists('b:sleuth')) && get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | silent call s:Init(0) | endif
+        \ | call s:AutoInit() | endif
   autocmd FileType * nested
-        \ if exists('b:sleuth') | silent call s:Apply(b:sleuth, 1) | endif
+        \ if exists('b:sleuth') | silent call s:Apply(b:sleuth, s:safe_options) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
