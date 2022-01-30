@@ -359,7 +359,7 @@ function! s:Apply(detected, safe_only) abort
   let msg = ''
   for option in a:safe_only ? s:safe_options : s:all_options
     if !exists('&' . option) || !has_key(options, option) ||
-          \ !&l:modifiable && index(s:safe_options, options) == -1
+          \ !&l:modifiable && index(s:safe_options, option) == -1
       continue
     endif
     let value = options[option]
