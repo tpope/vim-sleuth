@@ -160,6 +160,7 @@ let s:modeline_numbers = {
       \ }
 let s:modeline_booleans = {
       \ 'expandtab': 'expandtab', 'et': 'expandtab',
+      \ 'fixendofline': 'fixendofline', 'fixeol': 'fixendofline',
       \ }
 function! s:ModelineOptions(source) abort
   let options = {}
@@ -329,6 +330,7 @@ function! s:EditorConfigToOptions(pairs) abort
 
   if get(pairs, 'insert_final_newline', '') =~? '^true$\|^false$'
     let options.endofline = [pairs.insert_final_newline ==? 'true'] + sources.insert_final_newline
+    let options.fixendofline = copy(options.endofline)
   endif
 
   let eol = tolower(get(pairs, 'end_of_line', ''))
@@ -349,8 +351,8 @@ function! s:Ready(detected) abort
   return has_key(a:detected.options, 'expandtab') && has_key(a:detected.options, 'shiftwidth')
 endfunction
 
-let s:booleans = {'expandtab': 1, 'endofline': 1, 'bomb': 1}
-let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth']
+let s:booleans = {'expandtab': 1, 'fixendofline': 1, 'endofline': 1, 'bomb': 1}
+let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth', 'fixendofline']
 let s:all_options = s:safe_options + ['endofline', 'fileformat', 'fileencoding', 'bomb']
 
 function! s:Apply(detected, permitted_options) abort
@@ -509,9 +511,6 @@ function! s:Sleuth(line1, line2, range, bang, mods, args) abort
 endfunction
 
 setglobal smarttab
-if exists('&fixendofline')
-  setglobal nofixendofline
-endif
 
 if !exists('g:did_indent_on') && !get(g:, 'sleuth_no_filetype_indent_on')
   filetype indent on

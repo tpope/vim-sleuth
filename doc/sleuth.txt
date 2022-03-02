@@ -20,6 +20,7 @@ Vim Option     Safe?  EditorConfig key ~
 'shiftwidth'       Y  indent_size
 'tabstop'          Y  tab_width
 'textwidth'        Y  max_line_length
+'fixendofline'     Y  insert_final_newline
 'endofline'           insert_final_newline
 'fileformat'          end_of_line
 'fileencoding'        charset
@@ -34,8 +35,7 @@ settings.
 During automatic detection, Sleuth will additionally set 'filetype' if found
 in a modeline.  This won't happen if |:Sleuth| is invoked manually.
 
-Sleuth globally sets 'smarttab' (to avoid the need to set 'softtabstop') and
-'nofixendofline' (so that 'endofline' can take effect).
+Sleuth globally sets 'smarttab' (to avoid the need to set 'softtabstop').
 
 INTERFACE                                       *sleuth-interface*
 
