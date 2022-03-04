@@ -345,6 +345,11 @@ function! s:EditorConfigToOptions(pairs) abort
     let options.fileencoding = [substitute(charset, '\C-bom$', '', '')] + sources.charset
   endif
 
+  let filetype = tolower(get(pairs, 'vim_filetype', 'unset'))
+  if filetype !=# 'unset' && filetype =~# '^[.a-z0-9_-]*$'
+    let options.filetype = [substitute(filetype, '^\.\+\|\.\+$', '', 'g')] + sources.vim_filetype
+  endif
+
   return options
 endfunction
 
