@@ -379,6 +379,8 @@ function! s:Apply(detected, permitted_options) abort
     endif
     if getbufvar('', '&' . option) !=# value[0] || index(s:safe_options, option) >= 0
       exe 'setlocal ' . setting
+    elseif option ==# 'filetype'
+      exe empty(value[0]) ? 'setlocal filetype=' : 'setfiletype ' . value[0]
     endif
     if !&verbose
       if has_key(s:booleans, option)
