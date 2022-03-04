@@ -20,6 +20,7 @@ function! s:Warn(msg) abort
   echohl WarningMsg
   echo a:msg
   echohl NONE
+  return ''
 endfunction
 
 if exists('+shellslash')
@@ -494,6 +495,7 @@ function! s:Init(permitted_options) abort
     call s:Warn('corresponding feature in your vimrc:')
     call s:Warn('        let g:polyglot_disabled = ["autoindent"]')
   endif
+  return ''
 endfunction
 
 function! s:AutoInit() abort
@@ -502,12 +504,11 @@ function! s:AutoInit() abort
   else
     let options = s:all_options
   endif
-  silent call s:Init(options)
+  silent return s:Init(options)
 endfunction
 
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
-  call s:Init(a:bang ? s:safe_options : s:all_options)
-  return ''
+  return s:Init(a:bang ? s:safe_options : s:all_options)
 endfunction
 
 setglobal smarttab
@@ -540,10 +541,10 @@ augroup sleuth
   autocmd!
   autocmd BufNewFile,BufReadPost * nested
         \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | call s:AutoInit() | endif
+        \ | exe s:AutoInit() | endif
   autocmd BufFilePost * nested
         \ if (@% !~# '^!' || exists('b:sleuth')) && get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
-        \ | call s:AutoInit() | endif
+        \ | exe s:AutoInit() | endif
   autocmd FileType * nested
         \ if exists('b:sleuth') | silent call s:Apply(b:sleuth, s:safe_options) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
