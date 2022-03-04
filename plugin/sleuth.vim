@@ -355,6 +355,10 @@ endfunction
 let s:booleans = {'expandtab': 1, 'fixendofline': 1, 'endofline': 1, 'bomb': 1}
 let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth', 'fixendofline']
 let s:all_options = s:safe_options + ['endofline', 'fileformat', 'fileencoding', 'bomb']
+let s:short_options = {
+      \ 'expandtab': 'et', 'shiftwidth': 'sw', 'tabstop': 'ts',
+      \ 'textwidth': 'tw', 'fixendofline': 'fixeol',
+      \ 'endofline': 'eol', 'fileformat': 'ff', 'fileencoding': 'fenc'}
 
 function! s:Apply(detected, permitted_options) abort
   let options = copy(a:detected.options)
@@ -377,7 +381,11 @@ function! s:Apply(detected, permitted_options) abort
       exe 'setlocal ' . setting
     endif
     if !&verbose
-      let msg .= ' ' . setting
+      if has_key(s:booleans, option)
+        let msg .= ' ' . (value[0] ? '' : 'no') . get(s:short_options, option, option)
+      else
+        let msg .= ' ' . get(s:short_options, option, option) . '=' . value[0]
+      endif
       continue
     endif
     if len(value) > 1

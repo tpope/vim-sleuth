@@ -42,8 +42,8 @@ INTERFACE                                       *sleuth-interface*
                                                 *:Sleuth*
 :Sleuth                 Manually detect indentation.
 
-:verbose Sleuth         Manually detect indentation, and display what options
-                        were set and why.
+:verbose Sleuth         Manually detect indentation, and display the reason
+                        each option was set.
 
                                                 *SleuthIndicator()*
 SleuthIndicator()       Indicator for inclusion in 'statusline'.  Or use
