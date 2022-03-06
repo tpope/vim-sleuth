@@ -56,7 +56,7 @@ function! s:Guess(source, detected, lines) abort
       continue
     elseif line =~# '^\s*$'
       continue
-    elseif is_python && prev_line[1:-1] =~# '[[\({]'
+    elseif is_python && prev_line[-1:-1] =~# '[[\({]'
       let prev_indent = -1
       let prev_line = ''
       continue
