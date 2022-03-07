@@ -250,6 +250,9 @@ endfunction
 
 let s:editorconfig_cache = {}
 function! s:DetectEditorConfig(absolute_path, ...) abort
+  if empty(a:absolute_path)
+    return [{}, '']
+  endif
   let root = ''
   let tail = a:0 ? '/' . a:1 : '/.editorconfig'
   let dir = fnamemodify(a:absolute_path, ':h')
@@ -414,24 +417,24 @@ function! s:Apply(detected, permitted_options) abort
 endfunction
 
 function! s:Detect() abort
-  let file = s:Slash(@%)
-  let actual_path = !empty(file) && &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
-  if actual_path && file !~# '^$\|^\a\+:\|^/'
-    let file = s:Slash(getcwd()) . '/' . file
+  let detected = {'bufname': s:Slash(@%), 'declared': {}}
+  let actual_path = &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
+  if actual_path && detected.bufname !~# '^$\|^\a\+:\|^/'
+    let detected.bufname = s:Slash(getcwd()) . '/' . detected.bufname
   endif
-  let options = {}
-  let detected = {'bufname': file, 'options': options, 'heuristics': {}}
-  let pre = substitute(matchstr(file, '^\a\a\+\ze:'), '^\a', '\u&', 'g')
+  let detected.path = actual_path ? detected.bufname : ''
+  let pre = substitute(matchstr(detected.path, '^\a\a\+\ze:'), '^\a', '\u&', 'g')
   if len(pre) && exists('*' . pre . 'Real')
-    let file = s:Slash(call(pre . 'Real', [file]))
+    let detected.path = s:Slash(call(pre . 'Real', [detected.path]))
   endif
 
-  let declared = {}
-  let detected.declared = declared
-  let [detected.editorconfig, detected.root] = actual_path ? s:DetectEditorConfig(file) : [{}, '']
-  call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
-  call extend(declared, s:ModelineOptions(detected.bufname))
-  call extend(options, declared)
+  let [detected.editorconfig, detected.root] = s:DetectEditorConfig(detected.path)
+  call extend(detected.declared, s:EditorConfigToOptions(detected.editorconfig))
+  call extend(detected.declared, s:ModelineOptions(detected.bufname))
+
+  let options = copy(detected.declared)
+  let detected.options = options
+  let detected.heuristics = {}
   if s:Ready(detected)
     return detected
   endif
@@ -444,7 +447,7 @@ function! s:Detect() abort
     let options.expandtab = [1, detected.bufname]
     return detected
   endif
-  let dir = actual_path ? fnamemodify(file, ':h') : ''
+  let dir = len(detected.path) ? fnamemodify(detected.path, ':h') : ''
   let root = len(detected.root) ? detected.root : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
   if detected.bufname =~# '^\a\a\+:' || root ==# '.' || !isdirectory(root)
     let dir = ''
@@ -453,9 +456,9 @@ function! s:Detect() abort
   if c <= 0 || empty(dir)
     let detected.patterns = []
   else
-    let detected.patterns = ['*' . matchstr(file, '/\@<!\.[^][{}*?$~\`./]\+$')]
+    let detected.patterns = ['*' . matchstr(detected.bufname, '/\@<!\.[^][{}*?$~\`./]\+$')]
     if detected.patterns ==# ['*']
-      let detected.patterns = [matchstr(file, '/\zs[^][{}*?$~\`/]\+\ze/\=$')]
+      let detected.patterns = [matchstr(detected.bufname, '/\zs[^][{}*?$~\`/]\+\ze/\=$')]
       let dir = fnamemodify(dir, ':h')
       if empty(detected.patterns[0])
         let detected.patterns = []
@@ -465,7 +468,7 @@ function! s:Detect() abort
   while c > 0 && dir !~# '^$\|^//[^/]*$' && dir !=# fnamemodify(dir, ':h')
     for pattern in detected.patterns
       for neighbor in split(glob(dir.'/'.pattern), "\n")[0:7]
-        if neighbor !=# file && filereadable(neighbor)
+        if neighbor !=# detected.path && filereadable(neighbor)
           call s:Guess(neighbor, detected, readfile(neighbor, '', 256))
           let c -= 1
         endif
@@ -488,7 +491,7 @@ function! s:Detect() abort
   if has_key(options, 'shiftwidth')
     let options.expandtab = [stridx(join(lines, "\n"), "\t") == -1, detected.bufname]
   else
-    let detected.options = declared
+    let detected.options = copy(detected.declared)
   endif
   return detected
 endfunction
