@@ -430,7 +430,7 @@ function! s:Detect() abort
   let detected.declared = declared
   let [detected.editorconfig, detected.root] = actual_path ? s:DetectEditorConfig(file) : [{}, '']
   call extend(declared, s:EditorConfigToOptions(detected.editorconfig))
-  call extend(declared, s:ModelineOptions(file))
+  call extend(declared, s:ModelineOptions(detected.bufname))
   call extend(options, declared)
   if s:Ready(detected)
     return detected
