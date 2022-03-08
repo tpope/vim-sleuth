@@ -376,7 +376,7 @@ function! s:Apply(detected, permitted_options) abort
   let msg = ''
   for option in a:permitted_options
     if !exists('&' . option) || !has_key(options, option) ||
-          \ !&l:modifiable && index(['filetype'] + s:safe_options, option) == -1
+          \ !&l:modifiable && index(s:safe_options, option) == -1
       continue
     endif
     let value = options[option]
@@ -387,8 +387,6 @@ function! s:Apply(detected, permitted_options) abort
     endif
     if getbufvar('', '&' . option) !=# value[0] || index(s:safe_options, option) >= 0
       exe 'setlocal ' . setting
-    elseif option ==# 'filetype'
-      exe empty(value[0]) ? 'setlocal filetype=' : 'setfiletype ' . value[0]
     endif
     if !&verbose
       if has_key(s:booleans, option)
@@ -496,7 +494,7 @@ function! s:Detect() abort
   return detected
 endfunction
 
-function! s:Init(permitted_options) abort
+function! s:Init(permitted_options, do_filetype) abort
   unlet! b:sleuth
   if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
     return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
@@ -505,6 +503,16 @@ function! s:Init(permitted_options) abort
     return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
   endif
   let detected = s:Detect()
+  let setfiletype = ''
+  if a:do_filetype && has_key(detected.declared, 'filetype')
+    let filetype = detected.declared.filetype[0]
+    if filetype !=# &l:filetype || empty(filetype)
+      let setfiletype = 'setlocal filetype=' . filetype
+    else
+      let setfiletype = 'setfiletype ' . filetype
+    endif
+  endif
+  exe setfiletype
   call s:Apply(detected, a:permitted_options)
   let b:sleuth = detected
   if exists('s:polyglot')
@@ -517,16 +525,11 @@ function! s:Init(permitted_options) abort
 endfunction
 
 function! s:AutoInit() abort
-  if get(g:, 'sleuth_modeline_filetype', 1)
-    let options = ['filetype'] + s:all_options
-  else
-    let options = s:all_options
-  endif
-  silent return s:Init(options)
+  silent return s:Init(s:all_options, get(g:, 'sleuth_modeline_filetype', 1))
 endfunction
 
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
-  return s:Init(a:bang ? s:safe_options : s:all_options)
+  return s:Init(a:bang ? s:safe_options : s:all_options, 0)
 endfunction
 
 setglobal smarttab
