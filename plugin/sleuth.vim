@@ -34,10 +34,7 @@ else
 endif
 
 function! s:Guess(source, detected, lines) abort
-  let ext = matchstr(a:source, '\.\zs[^./]\+$')
-  let has_heredocs = ext =~# '^\%(p[lm]\|php\|ruby\|sh\)$' ||
-        \ get(a:lines, 0, '') =~# '^#!.*\<\%(perl\|php\|ruby\|[cz]\=sh\|bash\)$\>'
-  let is_python = ext ==# 'py' || get(a:lines, 0, '') =~# '^#!.*\<python\d\=\>'
+  let has_heredocs = &l:filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
   let tabstop = get(a:detected.options, 'tabstop', [8])[0]
@@ -56,7 +53,7 @@ function! s:Guess(source, detected, lines) abort
       continue
     elseif line =~# '^\s*$'
       continue
-    elseif is_python && prev_line[-1:-1] =~# '[[\({]'
+    elseif &l:filetype ==# 'python' && prev_line[-1:-1] =~# '[[\({]'
       let prev_indent = -1
       let prev_line = ''
       continue
@@ -72,7 +69,7 @@ function! s:Guess(source, detected, lines) abort
       let waiting_on = '-->'
     elseif line =~# '^[^"]*"""[^"]*$'
       let waiting_on = '^[^"]*"""[^"]*$'
-    elseif ext ==# 'go' && line =~# '^[^`]*`[^`]*$'
+    elseif &l:filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
     elseif has_heredocs
       let waiting_on = matchstr(line, '<<\s*\([''"]\=\)\zs\w\+\ze\1[^''"`<>]*$')
@@ -414,7 +411,7 @@ function! s:Apply(detected, permitted_options) abort
   endif
 endfunction
 
-function! s:Detect() abort
+function! s:DetectDeclared() abort
   let detected = {'bufname': s:Slash(@%), 'declared': {}}
   let actual_path = &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
   if actual_path && detected.bufname !~# '^$\|^\a\+:\|^/'
@@ -429,10 +426,24 @@ function! s:Detect() abort
   let [detected.editorconfig, detected.root] = s:DetectEditorConfig(detected.path)
   call extend(detected.declared, s:EditorConfigToOptions(detected.editorconfig))
   call extend(detected.declared, s:ModelineOptions(detected.bufname))
+  return detected
+endfunction
 
+function! s:DetectHeuristics(into) abort
+  let detected = a:into
+  if get(detected, 'filetype', '*') ==# &l:filetype
+    return detected
+  endif
   let options = copy(detected.declared)
   let detected.options = options
   let detected.heuristics = {}
+  let detected.filetype = &l:filetype
+  if has_key(detected, 'patterns')
+    call remove(detected, 'patterns')
+  endif
+  if empty(&l:filetype)
+    return detected
+  endif
   if s:Ready(detected)
     return detected
   endif
@@ -453,6 +464,8 @@ function! s:Detect() abort
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
   if c <= 0 || empty(dir)
     let detected.patterns = []
+  elseif type(get(g:, 'sleuth_' . &l:filetype . '_neighbor_globs')) == type([])
+    let detected.patterns = get(g:, 'sleuth_' . &l:filetype . '_neighbor_globs')
   else
     let detected.patterns = ['*' . matchstr(detected.bufname, '/\@<!\.[^][{}*?$~\`./]\+$')]
     if detected.patterns ==# ['*']
@@ -502,7 +515,7 @@ function! s:Init(permitted_options, do_filetype) abort
   if &l:filetype ==# 'netrw'
     return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
   endif
-  let detected = s:Detect()
+  let detected = s:DetectDeclared()
   let setfiletype = ''
   if a:do_filetype && has_key(detected.declared, 'filetype')
     let filetype = detected.declared.filetype[0]
@@ -513,6 +526,7 @@ function! s:Init(permitted_options, do_filetype) abort
     endif
   endif
   exe setfiletype
+  call s:DetectHeuristics(detected)
   call s:Apply(detected, a:permitted_options)
   let b:sleuth = detected
   if exists('s:polyglot')
@@ -567,7 +581,7 @@ augroup sleuth
         \ if (@% !~# '^!' || exists('b:sleuth')) && get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
         \ | exe s:AutoInit() | endif
   autocmd FileType * nested
-        \ if exists('b:sleuth') | silent call s:Apply(b:sleuth, s:safe_options) | endif
+        \ if exists('b:sleuth') | silent call s:Apply(s:DetectHeuristics(b:sleuth), s:safe_options) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
