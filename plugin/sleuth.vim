@@ -34,7 +34,7 @@ else
 endif
 
 function! s:Guess(source, detected, lines) abort
-  let has_heredocs = &l:filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
+  let has_heredocs = a:detected.filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
   let tabstop = get(a:detected.options, 'tabstop', [8])[0]
@@ -53,7 +53,7 @@ function! s:Guess(source, detected, lines) abort
       continue
     elseif line =~# '^\s*$'
       continue
-    elseif &l:filetype ==# 'python' && prev_line[-1:-1] =~# '[[\({]'
+    elseif a:detected.filetype ==# 'python' && prev_line[-1:-1] =~# '[[\({]'
       let prev_indent = -1
       let prev_line = ''
       continue
@@ -69,7 +69,7 @@ function! s:Guess(source, detected, lines) abort
       let waiting_on = '-->'
     elseif line =~# '^[^"]*"""[^"]*$'
       let waiting_on = '^[^"]*"""[^"]*$'
-    elseif &l:filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
+    elseif a:detected.filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
     elseif has_heredocs
       let waiting_on = matchstr(line, '<<\s*\([''"]\=\)\zs\w\+\ze\1[^''"`<>]*$')
@@ -431,17 +431,18 @@ endfunction
 
 function! s:DetectHeuristics(into) abort
   let detected = a:into
-  if get(detected, 'filetype', '*') ==# &l:filetype
+  let filetype = split(&l:filetype, '\.', 1)[0]
+  if get(detected, 'filetype', '*') ==# filetype
     return detected
   endif
+  let detected.filetype = filetype
   let options = copy(detected.declared)
   let detected.options = options
   let detected.heuristics = {}
-  let detected.filetype = &l:filetype
   if has_key(detected, 'patterns')
     call remove(detected, 'patterns')
   endif
-  if empty(&l:filetype)
+  if empty(filetype)
     return detected
   endif
   if s:Ready(detected)
@@ -464,8 +465,8 @@ function! s:DetectHeuristics(into) abort
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
   if c <= 0 || empty(dir)
     let detected.patterns = []
-  elseif type(get(g:, 'sleuth_' . &l:filetype . '_neighbor_globs')) == type([])
-    let detected.patterns = get(g:, 'sleuth_' . &l:filetype . '_neighbor_globs')
+  elseif type(get(g:, 'sleuth_' . detected.filetype . '_neighbor_globs')) == type([])
+    let detected.patterns = get(g:, 'sleuth_' . detected.filetype . '_neighbor_globs')
   else
     let detected.patterns = ['*' . matchstr(detected.bufname, '/\@<!\.[^][{}*?$~\`./]\+$')]
     if detected.patterns ==# ['*']
