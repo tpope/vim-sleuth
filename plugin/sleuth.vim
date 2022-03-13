@@ -176,7 +176,7 @@ function! s:ParseOptions(declarations, into, ...) abort
   return 0
 endfunction
 
-function! s:ModelineOptions(source) abort
+function! s:ModelineOptions() abort
   let options = {}
   if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# '\\\@<![[:space:]]nomodeline\>')
     return options
@@ -190,7 +190,7 @@ function! s:ModelineOptions(source) abort
   for lnum in lnums
     if s:ParseOptions(split(matchstr(getline(lnum),
           \ '\%(\S\@<!vim\=\|\s\@<=ex\):\s*\(set\= \zs[^:]\+\|\zs.*\S\)'),
-          \ '[[:space:]:]\+'), options, a:source, lnum)
+          \ '[[:space:]:]\+'), options, 'modeline', lnum)
       break
     endif
   endfor
@@ -404,7 +404,10 @@ function! s:Apply(detected, permitted_options) abort
       continue
     endif
     if len(value) > 1
-      let file = value[1] ==# a:detected.bufname ? '%' : fnamemodify(value[1], ':~:.')
+      let file = value[1] =~# '/' ? fnamemodify(value[1], ':~:.') : value[1]
+      if file !=# value[1] && file[0:0] !=# '~'
+        let file = './' . file
+      endif
       if len(value) > 2
         let file .= ' line ' . value[2]
       endif
