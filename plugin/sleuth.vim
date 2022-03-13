@@ -160,6 +160,22 @@ let s:modeline_booleans = {
       \ 'expandtab': 'expandtab', 'et': 'expandtab',
       \ 'fixendofline': 'fixendofline', 'fixeol': 'fixendofline',
       \ }
+function! s:ParseOptions(declarations, into, ...) abort
+  for option in a:declarations
+    if has_key(s:modeline_booleans, matchstr(option, '^\%(no\)\=\zs\w\+$'))
+      let a:into[s:modeline_booleans[matchstr(option, '^\%(no\)\=\zs\w\+')]] = [option !~# '^no'] + a:000
+    elseif has_key(s:modeline_numbers, matchstr(option, '^\w\+\ze=[1-9]\d*$'))
+      let a:into[s:modeline_numbers[matchstr(option, '^\w\+')]] = [str2nr(matchstr(option, '\d\+$'))] + a:000
+    elseif option =~# '^\%(ft\|filetype\)=[[:alnum:]._-]*$'
+      let a:into.filetype = [matchstr(option, '=\zs.*')] + a:000
+    endif
+    if option ==# 'nomodeline' || option ==# 'noml'
+      return 1
+    endif
+  endfor
+  return 0
+endfunction
+
 function! s:ModelineOptions(source) abort
   let options = {}
   if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# '\\\@<![[:space:]]nomodeline\>')
@@ -172,17 +188,11 @@ function! s:ModelineOptions(source) abort
     let lnums = range(1, line('$'))
   endif
   for lnum in lnums
-    for option in split(matchstr(getline(lnum), '\%(\S\@<!vim\=\|\s\@<=ex\):\s*\(set\= \zs[^:]\+\|\zs.*\S\)'), '[[:space:]:]\+')
-      if has_key(s:modeline_booleans, matchstr(option, '^\%(no\)\=\zs\w\+$'))
-        let options[s:modeline_booleans[matchstr(option, '^\%(no\)\=\zs\w\+')]] = [option !~# '^no', a:source, lnum]
-      elseif has_key(s:modeline_numbers, matchstr(option, '^\w\+\ze=[1-9]\d*$'))
-        let options[s:modeline_numbers[matchstr(option, '^\w\+')]] = [str2nr(matchstr(option, '\d\+$')), a:source, lnum]
-      elseif option =~# '^\%(ft\|filetype\)=[[:alnum:]._-]*$'
-        let options.filetype = [matchstr(option, '=\zs.*'), a:source, lnum]
-      elseif option ==# 'nomodeline' || option ==# 'noml'
-        return options
-      endif
-    endfor
+    if s:ParseOptions(split(matchstr(getline(lnum),
+          \ '\%(\S\@<!vim\=\|\s\@<=ex\):\s*\(set\= \zs[^:]\+\|\zs.*\S\)'),
+          \ '[[:space:]:]\+'), options, a:source, lnum)
+      break
+    endif
   endfor
   return options
 endfunction
