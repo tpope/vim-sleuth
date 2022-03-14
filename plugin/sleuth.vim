@@ -438,7 +438,7 @@ function! s:DetectDeclared() abort
 
   let [detected.editorconfig, detected.root] = s:DetectEditorConfig(detected.path)
   call extend(detected.declared, s:EditorConfigToOptions(detected.editorconfig))
-  call extend(detected.declared, s:ModelineOptions(detected.bufname))
+  call extend(detected.declared, s:ModelineOptions())
   return detected
 endfunction
 
