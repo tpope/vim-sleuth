@@ -378,7 +378,7 @@ let s:short_options = {
 function! s:Apply(detected, permitted_options) abort
   let options = copy(a:detected.options)
   if !exists('*shiftwidth') && !get(options, 'shiftwidth', [1])[0]
-    let options.shiftwidth = get(options, 'tabstop', [&tabstop])[0] + options.shiftwidth[1:-1]
+    let options.shiftwidth = [get(options, 'tabstop', [&tabstop])[0]] + options.shiftwidth[1:-1]
   endif
   let msg = ''
   for option in a:permitted_options
