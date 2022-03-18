@@ -52,8 +52,8 @@ SleuthIndicator()       Indicator for inclusion in 'statusline'.  Or use
 
 CONFIGURATION                                   *sleuth-configuration*
 
-To override detection and force options for a particular buffer, use a
-|modeline| or EditorConfig (https://editorconfig.org/).
+To override detection and force options for a particular file or directory,
+use a |modeline| or EditorConfig (https://editorconfig.org/), respectively.
 
                                                 *g:sleuth_automatic*
 Automatic detection of buffer options can be disabled entirely with:
