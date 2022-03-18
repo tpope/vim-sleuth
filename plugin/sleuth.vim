@@ -37,7 +37,7 @@ function! s:Guess(source, detected, lines) abort
   let has_heredocs = a:detected.filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\)$'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
-  let tabstop = get(a:detected.options, 'tabstop', [8])[0]
+  let tabstop = get(a:detected.options, 'tabstop', get(a:detected.defaults, 'tabstop', [8]))[0]
   let softtab = repeat(' ', tabstop)
   let waiting_on = ''
   let prev_indent = -1
@@ -381,7 +381,11 @@ let s:short_options = {
       \ 'endofline': 'eol', 'fileformat': 'ff', 'fileencoding': 'fenc'}
 
 function! s:Apply(detected, permitted_options) abort
-  let options = copy(a:detected.options)
+  let options = extend(copy(a:detected.defaults), a:detected.options)
+  if get(a:detected.defaults, 'shiftwidth', [1])[0] == 0 && get(options, 'shiftwidth', [0])[0] != 0 && !has_key(a:detected.declared, 'tabstop')
+    let options.tabstop = options.shiftwidth
+    let options.shiftwidth = a:detected.defaults.shiftwidth
+  endif
   if has_key(options, 'shiftwidth') && !has_key(options, 'expandtab')
     let options.expandtab = [stridx(join(getline(1, 256), "\n"), "\t") == -1, a:detected.bufname]
   endif
@@ -440,6 +444,29 @@ function! s:Apply(detected, permitted_options) abort
   return cmd ==# 'setlocal' ? '' : cmd
 endfunction
 
+function! s:UserOptions(ft, name) abort
+  let source = 'g:sleuth_' . a:ft . '_' . a:name
+  let val = get(g:, source[2 : -1])
+  let options = {}
+  if type(val) == type('')
+    call s:ParseOptions(split(substitute(val, '\S\@<![=+]\S\@=', 'ft=', 'g'), '[[:space:]:,]\+'), options, source)
+    if has_key(options, 'filetype')
+      call extend(options, s:UserOptions(remove(options, 'filetype')[0], a:name), 'keep')
+    endif
+    if has_key(options, 'tabstop')
+      call extend(options, {'shiftwidth': [0, source], 'expandtab': [0, source]}, 'keep')
+    elseif has_key(options, 'shiftwidth')
+      call extend(options, {'expandtab': [1, source]}, 'keep')
+    endif
+  elseif type(val) == type([])
+    call s:ParseOptions(val, options, source)
+  else
+    return {}
+  endif
+  call filter(options, 'index(s:safe_options, v:key) >= 0')
+  return options
+endfunction
+
 function! s:DetectDeclared() abort
   let detected = {'bufname': s:Slash(@%), 'declared': {}}
   let actual_path = &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
@@ -471,6 +498,7 @@ function! s:DetectHeuristics(into) abort
   if has_key(detected, 'patterns')
     call remove(detected, 'patterns')
   endif
+  let detected.defaults = s:UserOptions(filetype, 'defaults')
   if empty(filetype) || !get(b:, 'sleuth_automatic', 1) || empty(get(b:, 'sleuth_heuristics', get(g:, 'sleuth_' . filetype . '_heuristics', get(g:, 'sleuth_heuristics', 1))))
     return detected
   endif
@@ -536,7 +564,7 @@ function! s:DetectHeuristics(into) abort
 endfunction
 
 function! s:Init(redetect, unsafe, do_filetype) abort
-  if !a:redetect && exists('b:sleuth.declared')
+  if !a:redetect && exists('b:sleuth.defaults')
     let detected = b:sleuth
   endif
   unlet! b:sleuth
