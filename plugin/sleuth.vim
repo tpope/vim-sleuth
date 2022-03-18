@@ -134,7 +134,8 @@ function! s:Guess(source, detected, lines) abort
     if heuristics.hard || has_key(a:detected.options, 'tabstop') ||
           \ stridx(join(a:lines, "\n"), "\t") >= 0
       let options.tabstop = tabstop
-    elseif !&g:shiftwidth && has_key(options, 'shiftwidth')
+    elseif !&g:shiftwidth && has_key(options, 'shiftwidth') &&
+          \ !has_key(a:detected.options, 'shiftwidth')
       let options.tabstop = options.shiftwidth
       let options.shiftwidth = 0
     endif
