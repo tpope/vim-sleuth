@@ -455,7 +455,7 @@ function! s:DetectHeuristics(into) abort
   if has_key(detected, 'patterns')
     call remove(detected, 'patterns')
   endif
-  if empty(filetype)
+  if empty(filetype) || !get(b:, 'sleuth_automatic', 1) || empty(get(g:, 'sleuth_' . filetype . '_heuristics', get(g:, 'sleuth_heuristics', 1)))
     return detected
   endif
   if s:Ready(detected)
@@ -589,10 +589,10 @@ endfunction
 augroup sleuth
   autocmd!
   autocmd BufNewFile,BufReadPost * nested
-        \ if get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
+        \ if get(g:, 'sleuth_automatic', 1)
         \ | exe s:AutoInit() | endif
   autocmd BufFilePost * nested
-        \ if (@% !~# '^!' || exists('b:sleuth')) && get(b:, 'sleuth_automatic', get(g:, 'sleuth_automatic', 1))
+        \ if (@% !~# '^!' || exists('b:sleuth')) && get(g:, 'sleuth_automatic', 1)
         \ | exe s:AutoInit() | endif
   autocmd FileType * nested
         \ if exists('b:sleuth') | silent call s:Apply(s:DetectHeuristics(b:sleuth), s:safe_options) | endif

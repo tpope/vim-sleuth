@@ -55,14 +55,23 @@ CONFIGURATION                                   *sleuth-configuration*
 To override detection and force options for a particular file or directory,
 use a |modeline| or EditorConfig (https://editorconfig.org/), respectively.
 
+                                                *g:sleuth_{filetype}_heuristics*
+To disable the heuristic algorithm for a given 'filetype', assign a false
+value to a variable named like g:sleuth_{filetype}_heuristics:
+>
+        let g:sleuth_gitcommit_heuristics = 0
+<
+                                                *g:sleuth_heuristics*
+Alternatively, one can disable heuristics by default, and opt-in for
+individual file types:
+>
+        let g:sleuth_heuristics = 0
+        let g:sleuth_perl_heuristics = 1
+<
                                                 *g:sleuth_automatic*
 Automatic detection of buffer options can be disabled entirely with:
 >
         let g:sleuth_automatic = 0
-<
-or:
->
-        let b:sleuth_automatic = 0
 <
                                                 *g:sleuth_no_filetype_indent_on*
 Sleuth forces |:filetype-indent-on| by default, which enables file-type
