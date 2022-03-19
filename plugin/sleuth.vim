@@ -408,9 +408,13 @@ function! s:Apply(detected, permitted_options) abort
       continue
     endif
     if len(value) > 1
-      let file = value[1] =~# '/' ? fnamemodify(value[1], ':~:.') : value[1]
-      if file !=# value[1] && file[0:0] !=# '~'
-        let file = './' . file
+      if value[1] ==# a:detected.bufname
+        let file = '%'
+      else
+        let file = value[1] =~# '/' ? fnamemodify(value[1], ':~:.') : value[1]
+        if file !=# value[1] && file[0:0] !=# '~'
+          let file = './' . file
+        endif
       endif
       if len(value) > 2
         let file .= ' line ' . value[2]
