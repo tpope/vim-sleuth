@@ -530,6 +530,9 @@ function! s:Init(permitted_options, do_filetype) abort
   if &l:filetype ==# 'netrw'
     return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
   endif
+  if &l:binary
+    return s:Warn(':Sleuth disabled for binary files')
+  endif
   let detected = s:DetectDeclared()
   let setfiletype = ''
   if a:do_filetype && has_key(detected.declared, 'filetype')
@@ -596,7 +599,8 @@ augroup sleuth
         \ if (@% !~# '^!' || exists('b:sleuth')) && get(g:, 'sleuth_automatic', 1)
         \ | exe s:AutoInit() | endif
   autocmd FileType * nested
-        \ if exists('b:sleuth') | silent call s:Apply(s:DetectHeuristics(b:sleuth), s:safe_options) | endif
+        \ if exists('b:sleuth') && !&l:binary
+        \ | silent call s:Apply(s:DetectHeuristics(b:sleuth), s:safe_options) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
