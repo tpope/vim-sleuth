@@ -266,9 +266,13 @@ function! s:DetectEditorConfig(absolute_path, ...) abort
   let dir = fnamemodify(a:absolute_path, ':h')
   let previous_dir = ''
   let sections = []
+  let overrides = get(g:, 'sleuth_editorconfig_overrides', {})
   while dir !=# previous_dir && dir !~# '^//\%([^/]\+/\=\)\=$'
-    let read_from = dir . tail
-    let ftime = getftime(read_from)
+    let read_from = get(overrides, dir . tail, get(overrides, dir, dir . tail))
+    if type(read_from) == type('') && read_from !=# dir . tail && read_from !~# '^/\|^\a\+:\|^$'
+      let read_from = simplify(dir . '/' . read_from)
+    endif
+    let ftime = type(read_from) == type('') ? getftime(read_from) : -1
     let [cachetime; econfig] = get(s:editorconfig_cache, read_from, [-1, {}, []])
     if ftime != cachetime
       let econfig = s:ReadEditorConfig(read_from)
