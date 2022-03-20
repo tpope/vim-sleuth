@@ -378,6 +378,9 @@ let s:short_options = {
 
 function! s:Apply(detected, permitted_options) abort
   let options = copy(a:detected.options)
+  if has_key(options, 'shiftwidth') && !has_key(options, 'expandtab')
+    let options.expandtab = [stridx(join(getline(1, 256), "\n"), "\t") == -1, a:detected.bufname]
+  endif
   if !exists('*shiftwidth') && !get(options, 'shiftwidth', [1])[0]
     let options.shiftwidth = [get(options, 'tabstop', [&tabstop])[0]] + options.shiftwidth[1:-1]
   endif
@@ -420,7 +423,7 @@ function! s:Apply(detected, permitted_options) abort
   if !&verbose && !empty(msg)
     echo ':setlocal' . msg
   endif
-  if !s:Ready(a:detected)
+  if !has_key(options, 'shiftwidth')
     call s:Warn(':Sleuth failed to detect indent settings')
   endif
 endfunction
@@ -514,9 +517,7 @@ function! s:DetectHeuristics(into) abort
     endif
     let dir = fnamemodify(dir, ':h')
   endwhile
-  if has_key(options, 'shiftwidth')
-    let options.expandtab = [stridx(join(lines, "\n"), "\t") == -1, detected.bufname]
-  else
+  if !has_key(options, 'shiftwidth')
     let detected.options = copy(detected.declared)
   endif
   return detected
