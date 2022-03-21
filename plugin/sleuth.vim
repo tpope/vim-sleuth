@@ -527,7 +527,10 @@ function! s:DetectHeuristics(into) abort
   return detected
 endfunction
 
-function! s:Init(permitted_options, do_filetype) abort
+function! s:Init(redetect, unsafe, do_filetype) abort
+  if !a:redetect && exists('b:sleuth.declared')
+    let detected = b:sleuth
+  endif
   unlet! b:sleuth
   if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
     return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
@@ -538,7 +541,9 @@ function! s:Init(permitted_options, do_filetype) abort
   if &l:binary
     return s:Warn(':Sleuth disabled for binary files')
   endif
-  let detected = s:DetectDeclared()
+  if !exists('detected')
+    let detected = s:DetectDeclared()
+  endif
   let setfiletype = ''
   if a:do_filetype && has_key(detected.declared, 'filetype')
     let filetype = detected.declared.filetype[0]
@@ -550,7 +555,7 @@ function! s:Init(permitted_options, do_filetype) abort
   endif
   exe setfiletype
   call s:DetectHeuristics(detected)
-  call s:Apply(detected, a:permitted_options)
+  call s:Apply(detected, (a:do_filetype ? ['filetype'] : []) + (a:unsafe ? s:all_options : s:safe_options))
   let b:sleuth = detected
   if exists('s:polyglot')
     call s:Warn('Charlatan :Sleuth implementation in vim-polyglot has been found and disabled.')
@@ -562,11 +567,12 @@ function! s:Init(permitted_options, do_filetype) abort
 endfunction
 
 function! s:AutoInit() abort
-  silent return s:Init(s:all_options, get(g:, 'sleuth_modeline_filetype', 1))
+  silent return s:Init(1, 1, 1)
 endfunction
 
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
-  return s:Init(a:bang ? s:safe_options : s:all_options, 0)
+  let safe = a:bang || expand("<sfile>") =~# '\%(^\|\.\.\)FileType '
+  return s:Init(!a:bang, !safe, !safe)
 endfunction
 
 setglobal smarttab
@@ -604,8 +610,7 @@ augroup sleuth
         \ if (@% !~# '^!' || exists('b:sleuth')) && get(g:, 'sleuth_automatic', 1)
         \ | exe s:AutoInit() | endif
   autocmd FileType * nested
-        \ if exists('b:sleuth') && !&l:binary
-        \ | silent call s:Apply(s:DetectHeuristics(b:sleuth), s:safe_options) | endif
+        \ if exists('b:sleuth') | silent exe s:Init(0, 0, 0) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
