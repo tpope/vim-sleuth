@@ -389,6 +389,7 @@ function! s:Apply(detected, permitted_options) abort
     let options.shiftwidth = [get(options, 'tabstop', [&tabstop])[0]] + options.shiftwidth[1:-1]
   endif
   let msg = ''
+  let cmd = 'setlocal'
   for option in a:permitted_options
     if !exists('&' . option) || !has_key(options, option) ||
           \ !&l:modifiable && index(s:safe_options, option) == -1
@@ -401,7 +402,7 @@ function! s:Apply(detected, permitted_options) abort
       let setting = option . '=' . value[0]
     endif
     if getbufvar('', '&' . option) !=# value[0] || index(s:safe_options, option) >= 0
-      exe 'setlocal ' . setting
+      let cmd .= ' ' . setting
     endif
     if !&verbose
       if has_key(s:booleans, option)
@@ -434,6 +435,7 @@ function! s:Apply(detected, permitted_options) abort
   if !has_key(options, 'shiftwidth')
     call s:Warn(':Sleuth failed to detect indent settings')
   endif
+  return cmd ==# 'setlocal' ? '' : cmd
 endfunction
 
 function! s:DetectDeclared() abort
@@ -559,7 +561,7 @@ function! s:Init(redetect, unsafe, do_filetype) abort
   endif
   exe setfiletype
   call s:DetectHeuristics(detected)
-  call s:Apply(detected, (a:do_filetype ? ['filetype'] : []) + (a:unsafe ? s:all_options : s:safe_options))
+  let cmd = s:Apply(detected, (a:do_filetype ? ['filetype'] : []) + (a:unsafe ? s:all_options : s:safe_options))
   let b:sleuth = detected
   if exists('s:polyglot')
     call s:Warn('Charlatan :Sleuth implementation in vim-polyglot has been found and disabled.')
@@ -567,7 +569,7 @@ function! s:Init(redetect, unsafe, do_filetype) abort
     call s:Warn('corresponding feature in your vimrc:')
     call s:Warn('        let g:polyglot_disabled = ["autoindent"]')
   endif
-  return ''
+  return cmd
 endfunction
 
 function! s:AutoInit() abort
