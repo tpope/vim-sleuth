@@ -471,7 +471,7 @@ function! s:DetectHeuristics(into) abort
   if has_key(detected, 'patterns')
     call remove(detected, 'patterns')
   endif
-  if empty(filetype) || !get(b:, 'sleuth_automatic', 1) || empty(get(g:, 'sleuth_' . filetype . '_heuristics', get(g:, 'sleuth_heuristics', 1)))
+  if empty(filetype) || !get(b:, 'sleuth_automatic', 1) || empty(get(b:, 'sleuth_heuristics', get(g:, 'sleuth_' . filetype . '_heuristics', get(g:, 'sleuth_heuristics', 1))))
     return detected
   endif
   if s:Ready(detected)
