@@ -67,10 +67,11 @@ individual file types:
         let g:sleuth_perl_heuristics = 1
 <
                                                 *g:sleuth_automatic*
-Automatic detection of buffer options can be disabled entirely with:
->
-        let g:sleuth_automatic = 0
-<
+Sleuth used to support setting g:sleuth_automatic to a false value and instead
+calling :Sleuth selectively from |FileType| autocommands.  This will no longer
+work quite right, and thus g:sleuth_automatic has been deprecated in favor of
+the heuristics options above.
+
                                                 *g:sleuth_no_filetype_indent_on*
 Sleuth forces |:filetype-indent-on| by default, which enables file-type
 specific indenting algorithms and is highly recommended. To opt out:
