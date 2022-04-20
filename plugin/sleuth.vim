@@ -469,11 +469,12 @@ endfunction
 
 function! s:DetectDeclared() abort
   let detected = {'bufname': s:Slash(@%), 'declared': {}}
-  let actual_path = &l:buftype =~# '^\%(nowrite\|acwrite\)\=$'
-  if actual_path && detected.bufname !~# '^$\|^\a\+:\|^/'
+  let absolute_or_empty = detected.bufname =~# '^$\|^\a\+:\|^/'
+  if &l:buftype =~# '^\%(nowrite\)\=$' && !absolute_or_empty
     let detected.bufname = s:Slash(getcwd()) . '/' . detected.bufname
+    let absolute_or_empty = 1
   endif
-  let detected.path = actual_path ? detected.bufname : ''
+  let detected.path = absolute_or_empty ? detected.bufname : ''
   let pre = substitute(matchstr(detected.path, '^\a\a\+\ze:'), '^\a', '\u&', 'g')
   if len(pre) && exists('*' . pre . 'Real')
     let detected.path = s:Slash(call(pre . 'Real', [detected.path]))
@@ -568,7 +569,7 @@ function! s:Init(redetect, unsafe, do_filetype) abort
     let detected = b:sleuth
   endif
   unlet! b:sleuth
-  if &l:buftype =~# '^\%(quickfix\|help\|terminal\|prompt\|popup\)$'
+  if &l:buftype !~# '^\%(nowrite\|nofile\|acwrite\)\=$'
     return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
   endif
   if &l:filetype ==# 'netrw'
