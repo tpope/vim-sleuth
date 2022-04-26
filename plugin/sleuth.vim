@@ -262,15 +262,16 @@ function! s:DetectEditorConfig(absolute_path, ...) abort
     return [{}, '']
   endif
   let root = ''
-  let tail = a:0 ? '/' . a:1 : '/.editorconfig'
+  let tail = a:0 ? a:1 : '.editorconfig'
   let dir = fnamemodify(a:absolute_path, ':h')
   let previous_dir = ''
   let sections = []
   let overrides = get(g:, 'sleuth_editorconfig_overrides', {})
   while dir !=# previous_dir && dir !~# '^//\%([^/]\+/\=\)\=$'
-    let read_from = get(overrides, dir . tail, get(overrides, dir, dir . tail))
-    if type(read_from) == type('') && read_from !=# dir . tail && read_from !~# '^/\|^\a\+:\|^$'
-      let read_from = simplify(dir . '/' . read_from)
+    let head = substitute(dir, '/\=$', '/', '')
+    let read_from = get(overrides, head . tail, get(overrides, head, head . tail))
+    if type(read_from) == type('') && read_from !=# head . tail && read_from !~# '^/\|^\a\+:\|^$'
+      let read_from = simplify(head . read_from)
     endif
     let ftime = type(read_from) == type('') ? getftime(read_from) : -1
     let [cachetime; econfig] = get(s:editorconfig_cache, read_from, [-1, {}, []])
@@ -282,7 +283,7 @@ function! s:DetectEditorConfig(absolute_path, ...) abort
     endif
     call extend(sections, econfig[1], 'keep')
     if get(econfig[0], 'root', [''])[0] ==? 'true'
-      let root = dir
+      let root = head
       break
     endif
     let previous_dir = dir
@@ -516,7 +517,7 @@ function! s:DetectHeuristics(into) abort
     return detected
   endif
   let dir = len(detected.path) ? fnamemodify(detected.path, ':h') : ''
-  let root = len(detected.root) ? detected.root : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
+  let root = len(detected.root) ? fnamemodify(detected.root, ':h') : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
   if detected.bufname =~# '^\a\a\+:' || root ==# '.' || !isdirectory(root)
     let dir = ''
   endif
