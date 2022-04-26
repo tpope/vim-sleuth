@@ -11,7 +11,9 @@ SUMMARY                                         *sleuth*
 Automatic detection happens on the |BufNewFile|, |BufReadPost|, and
 |BufFilePost| events.  Sleuth first consults modelines, then EditorConfig
 (https://editorconfig.org) files.  If neither of these produces a value for
-'expandtab' and 'shiftwidth', a heuristic algorithm is used to guess them.
+'expandtab' and 'shiftwidth', a heuristic algorithm is used to guess them,
+first on the current file, and then on other files with the same extension in
+the same and parent directories.
 
 The full list of detected options is as follows:
 
