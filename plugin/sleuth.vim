@@ -481,6 +481,12 @@ function! s:DetectDeclared() abort
     let detected.path = s:Slash(call(pre . 'Real', [detected.path]))
   endif
 
+  try
+    if len(detected.path) && exists('*ExcludeBufferFromDiscovery') && !empty(ExcludeBufferFromDiscovery(detected.path, 'sleuth'))
+      let detected.path = ''
+    endif
+  catch
+  endtry
   let [detected.editorconfig, detected.root] = s:DetectEditorConfig(detected.path)
   call extend(detected.declared, s:EditorConfigToOptions(detected.editorconfig))
   call extend(detected.declared, s:ModelineOptions())
