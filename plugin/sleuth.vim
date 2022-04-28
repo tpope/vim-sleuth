@@ -1,6 +1,6 @@
 " sleuth.vim - Heuristically set buffer options
 " Maintainer:   Tim Pope <http://tpo.pe/>
-" Version:      1.3
+" Version:      2.0
 " GetLatestVimScripts: 4375 1 :AutoInstall: sleuth.vim
 
 if exists("#polyglot-sleuth")
