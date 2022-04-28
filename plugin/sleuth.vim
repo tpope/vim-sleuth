@@ -530,6 +530,8 @@ function! s:DetectHeuristics(into) abort
   let c = get(b:, 'sleuth_neighbor_limit', get(g:, 'sleuth_neighbor_limit', 8))
   if c <= 0 || empty(dir)
     let detected.patterns = []
+  elseif type(get(b:, 'sleuth_globs')) == type([])
+    let detected.patterns = b:sleuth_globs
   elseif type(get(g:, 'sleuth_' . detected.filetype . '_globs')) == type([])
     let detected.patterns = get(g:, 'sleuth_' . detected.filetype . '_globs')
   else
