@@ -472,7 +472,7 @@ function! s:DetectDeclared() abort
   let detected = {'bufname': s:Slash(@%), 'declared': {}}
   let absolute_or_empty = detected.bufname =~# '^$\|^\a\+:\|^/'
   if &l:buftype =~# '^\%(nowrite\)\=$' && !absolute_or_empty
-    let detected.bufname = s:Slash(getcwd()) . '/' . detected.bufname
+    let detected.bufname = substitute(s:Slash(getcwd()), '/\=$', '/', '') . detected.bufname
     let absolute_or_empty = 1
   endif
   let detected.path = absolute_or_empty ? detected.bufname : ''
