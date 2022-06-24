@@ -270,7 +270,9 @@ function! s:DetectEditorConfig(absolute_path, ...) abort
   while dir !=# previous_dir && dir !~# '^//\%([^/]\+/\=\)\=$'
     let head = substitute(dir, '/\=$', '/', '')
     let read_from = get(overrides, head . tail, get(overrides, head, head . tail))
-    if type(read_from) == type('') && read_from !=# head . tail && read_from !~# '^/\|^\a\+:\|^$'
+    if read_from is# ''
+      break
+    elseif type(read_from) == type('') && read_from !=# head . tail && read_from !~# '^/\|^\a\+:'
       let read_from = simplify(head . read_from)
     endif
     let ftime = type(read_from) == type('') ? getftime(read_from) : -1
