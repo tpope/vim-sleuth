@@ -16,10 +16,12 @@ endif
 let g:loaded_sleuth = 1
 lockvar g:loaded_sleuth
 
-function! s:Warn(msg) abort
-  echohl WarningMsg
-  echo a:msg
-  echohl NONE
+function! s:Warn(msg, ...) abort
+  if !get(a:000, 0, 0)
+    echohl WarningMsg
+    echo a:msg
+    echohl NONE
+  endif
   return ''
 endfunction
 
@@ -383,7 +385,7 @@ let s:short_options = {
       \ 'textwidth': 'tw', 'fixendofline': 'fixeol',
       \ 'endofline': 'eol', 'fileformat': 'ff', 'fileencoding': 'fenc'}
 
-function! s:Apply(detected, permitted_options) abort
+function! s:Apply(detected, permitted_options, silent) abort
   let options = extend(copy(a:detected.defaults), a:detected.options)
   if get(a:detected.defaults, 'shiftwidth', [1])[0] == 0 && get(options, 'shiftwidth', [0])[0] != 0 && !has_key(a:detected.declared, 'tabstop')
     let options.tabstop = options.shiftwidth
@@ -411,7 +413,7 @@ function! s:Apply(detected, permitted_options) abort
     if getbufvar('', '&' . option) !=# value[0] || index(s:safe_options, option) >= 0
       let cmd .= ' ' . setting
     endif
-    if !&verbose
+    if !&verbose || a:silent
       if has_key(s:booleans, option)
         let msg .= ' ' . (value[0] ? '' : 'no') . get(s:short_options, option, option)
       else
@@ -436,13 +438,13 @@ function! s:Apply(detected, permitted_options) abort
       echo ':setlocal ' . setting
     endif
   endfor
-  if !&verbose && !empty(msg)
+  if !&verbose && !empty(msg) && !a:silent
     echo ':setlocal' . msg
   endif
   if has_key(options, 'shiftwidth')
     let cmd .= ' softtabstop=' . (exists('*shiftwidth') ? -1 : options.shiftwidth[0])
   else
-    call s:Warn(':Sleuth failed to detect indent settings')
+    call s:Warn(':Sleuth failed to detect indent settings', a:silent)
   endif
   return cmd ==# 'setlocal' ? '' : cmd
 endfunction
@@ -575,19 +577,19 @@ function! s:DetectHeuristics(into) abort
   return detected
 endfunction
 
-function! s:Init(redetect, unsafe, do_filetype) abort
+function! s:Init(redetect, unsafe, do_filetype, silent) abort
   if !a:redetect && exists('b:sleuth.defaults')
     let detected = b:sleuth
   endif
   unlet! b:sleuth
   if &l:buftype !~# '^\%(nowrite\|nofile\|acwrite\)\=$'
-    return s:Warn(':Sleuth disabled for buftype=' . &l:buftype)
+    return s:Warn(':Sleuth disabled for buftype=' . &l:buftype, a:silent)
   endif
   if &l:filetype ==# 'netrw'
-    return s:Warn(':Sleuth disabled for filetype=' . &l:filetype)
+    return s:Warn(':Sleuth disabled for filetype=' . &l:filetype, a:silent)
   endif
   if &l:binary
-    return s:Warn(':Sleuth disabled for binary files')
+    return s:Warn(':Sleuth disabled for binary files', a:silent)
   endif
   if !exists('detected')
     let detected = s:DetectDeclared()
@@ -603,9 +605,9 @@ function! s:Init(redetect, unsafe, do_filetype) abort
   endif
   exe setfiletype
   call s:DetectHeuristics(detected)
-  let cmd = s:Apply(detected, (a:do_filetype ? ['filetype'] : []) + (a:unsafe ? s:all_options : s:safe_options))
+  let cmd = s:Apply(detected, (a:do_filetype ? ['filetype'] : []) + (a:unsafe ? s:all_options : s:safe_options), a:silent)
   let b:sleuth = detected
-  if exists('s:polyglot')
+  if exists('s:polyglot') && !a:silent
     call s:Warn('Charlatan :Sleuth implementation in vim-polyglot has been found and disabled.')
     call s:Warn('To get rid of this message, uninstall vim-polyglot, or disable the')
     call s:Warn('corresponding feature in your vimrc:')
@@ -615,12 +617,12 @@ function! s:Init(redetect, unsafe, do_filetype) abort
 endfunction
 
 function! s:AutoInit() abort
-  silent return s:Init(1, 1, 1)
+  return s:Init(1, 1, 1, 1)
 endfunction
 
 function! s:Sleuth(line1, line2, range, bang, mods, args) abort
   let safe = a:bang || expand("<sfile>") =~# '\%(^\|\.\.\)FileType '
-  return s:Init(!a:bang, !safe, !safe)
+  return s:Init(!a:bang, !safe, !safe, 0)
 endfunction
 
 setglobal smarttab
@@ -658,7 +660,7 @@ augroup sleuth
         \ if (@% !~# '^!' || exists('b:sleuth')) && get(g:, 'sleuth_automatic', 1)
         \ | exe s:AutoInit() | endif
   autocmd FileType * nested
-        \ if exists('b:sleuth') | silent exe s:Init(0, 0, 0) | endif
+        \ if exists('b:sleuth') | exe s:Init(0, 0, 0, 1) | endif
   autocmd User Flags call Hoist('buffer', 5, 'SleuthIndicator')
 augroup END
 
