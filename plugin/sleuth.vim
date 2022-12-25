@@ -450,8 +450,15 @@ function! s:Apply(detected, permitted_options, silent) abort
 endfunction
 
 function! s:UserOptions(ft, name) abort
-  let source = 'g:sleuth_' . a:ft . '_' . a:name
-  let val = get(g:, source[2 : -1])
+  if exists('b:sleuth_' . a:name)
+    let source = 'b:sleuth_' . a:name
+  elseif exists('g:sleuth_' . a:ft . '_' . a:name)
+    let source = 'g:sleuth_' . a:ft . '_' . a:name
+  endif
+  if !exists('l:source') || type(eval(source)) == type(function('tr'))
+    return {}
+  endif
+  let val = eval(source)
   let options = {}
   if type(val) == type('')
     call s:ParseOptions(split(substitute(val, '\S\@<![=+]\S\@=', 'ft=', 'g'), '[[:space:]:,]\+'), options, source)
@@ -465,8 +472,6 @@ function! s:UserOptions(ft, name) abort
     endif
   elseif type(val) == type([])
     call s:ParseOptions(val, options, source)
-  else
-    return {}
   endif
   call filter(options, 'index(s:safe_options, v:key) >= 0')
   return options
