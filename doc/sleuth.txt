@@ -36,7 +36,6 @@ reapplied on every |FileType| event, so that they can override any |ftplugin|
 settings.
 
 Sleuth always sets 'softtabstop' to -1, effectively mirroring 'shiftwidth'.
-It also sets 'smarttab' globally.
 
 INTERFACE                                       *sleuth-interface*
 

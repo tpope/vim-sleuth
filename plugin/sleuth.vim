@@ -630,8 +630,6 @@ function! s:Sleuth(line1, line2, range, bang, mods, args) abort
   return s:Init(!a:bang, !safe, !safe, 0)
 endfunction
 
-setglobal smarttab
-
 if !exists('g:did_indent_on') && !get(g:, 'sleuth_no_filetype_indent_on')
   filetype indent on
 elseif !exists('g:did_load_filetypes')
