@@ -8,12 +8,7 @@ are also consulted, adding `'tabstop'`, `'textwidth'`, `'endofline'`,
 `'fileformat'`, `'fileencoding'`, and `'bomb'` to the list of supported
 options.
 
-Compare to [DetectIndent][].  I wrote this because I wanted something fully
-automatic.  My goal is that by installing this plugin, you can remove all
-indenting related configuration from your vimrc.
-
 [EditorConfig]: https://editorconfig.org/
-[DetectIndent]: http://www.vim.org/scripts/script.php?script_id=1171
 
 ## Installation
 
