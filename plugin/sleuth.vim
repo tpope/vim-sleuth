@@ -181,7 +181,8 @@ endfunction
 
 function! s:ModelineOptions() abort
   let options = {}
-  if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# '\\\@<![[:space:]]nomodeline\>')
+  if !&l:modeline && (&g:modeline || s:Capture('setlocal') =~# '\\\@<![[:space:]]nomodeline\>' &&
+        \ s:Capture('verbose setglobal modeline?') !=# s:Capture('verbose setlocal modeline?'))
     return options
   endif
   let modelines = get(b:, 'sleuth_modelines', get(g:, 'sleuth_modelines', 5))
