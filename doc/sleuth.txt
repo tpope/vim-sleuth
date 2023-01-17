@@ -79,4 +79,14 @@ specific indenting algorithms and is highly recommended. To opt out:
 >
         let g:sleuth_no_filetype_indent_on = 1
 <
+                                                *g:sleuth_editorconfig_overrides*
+The value can be a relative or absolute path, or an empty string to disable
+the file without replacing it.  On Windows, forward slashes must be used.
+
+This is a solution to the problem of a repository including a poorly
+considered .editorconfig that can't easily be changed.
+>
+    let g:sleuth_editorconfig_overrides = {
+          \ expand('~/bad/repo/.editorconfig'): '.editorconfig.mine'}
+<
  vim:tw=78:et:ft=help:norl:
