@@ -133,11 +133,11 @@ function! s:Guess(source, detected, lines) abort
     if heuristics.soft
       let options.expandtab = 1
     endif
-    if heuristics.hard || has_key(a:detected.options, 'tabstop') ||
-          \ stridx(join(a:lines, "\n"), "\t") >= 0
+    if has_key(a:detected.options, 'tabstop')
       let options.tabstop = tabstop
-    elseif !&g:shiftwidth && has_key(options, 'shiftwidth') &&
-          \ !has_key(a:detected.options, 'shiftwidth')
+    elseif heuristics.spaces > heuristics.hard ||
+          \ (!&g:shiftwidth && has_key(options, 'shiftwidth') &&
+          \ !has_key(a:detected.options, 'shiftwidth'))
       let options.tabstop = options.shiftwidth
       let options.shiftwidth = 0
     endif
