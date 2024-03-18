@@ -442,7 +442,7 @@ function! s:Apply(detected, permitted_options, silent) abort
   if !&verbose && !empty(msg) && !a:silent
     echo ':setlocal' . msg
   endif
-  if has_key(options, 'shiftwidth')
+  if !&smarttab && has_key(options, 'shiftwidth')
     let cmd .= ' softtabstop=' . (exists('*shiftwidth') ? -1 : options.shiftwidth[0])
   else
     call s:Warn(':Sleuth failed to detect indent settings', a:silent)
