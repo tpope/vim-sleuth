@@ -69,8 +69,8 @@ function! s:Guess(source, detected, lines) abort
       let waiting_on = '\*/'
     elseif line =~# '^\s*<\!--' && line !~# '-->'
       let waiting_on = '-->'
-    elseif line =~# '^[^"]*"""[^"]*$'
-      let waiting_on = '^[^"]*"""[^"]*$'
+    elseif line =~# '^[^"]*"""'
+      let waiting_on = '^[^"]*"""'
     elseif a:detected.filetype ==# 'go' && line =~# '^[^`]*`[^`]*$'
       let waiting_on = '^[^`]*`[^`]*$'
     elseif has_heredocs
