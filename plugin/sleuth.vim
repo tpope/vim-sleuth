@@ -39,7 +39,7 @@ function! s:Guess(source, detected, lines) abort
   let has_heredocs = a:detected.filetype =~# '^\%(perl\|php\|ruby\|[cz]\=sh\|bash\)$'
   let options = {}
   let heuristics = {'spaces': 0, 'hard': 0, 'soft': 0, 'checked': 0, 'indents': {}}
-  let tabstop = get(a:detected.options, 'tabstop', get(a:detected.defaults, 'tabstop', [8]))[0]
+  let tabstop = get(a:detected.options, 'tabstop', get(a:detected.defaults, 'tabstop', [&tabstop]))[0]
   let softtab = repeat(' ', tabstop)
   let waiting_on = ''
   let prev_indent = -1
@@ -385,7 +385,7 @@ function! s:Ready(detected) abort
   return has_key(a:detected.options, 'expandtab') && has_key(a:detected.options, 'shiftwidth')
 endfunction
 
-let s:booleans = {'expandtab': 1, 'fixendofline': 1, 'endofline': 1, 'bomb': 1}
+let s:booleans = {'expandtab': &expandtab, 'fixendofline': &fixendofline, 'endofline': &endofline, 'bomb': &bomb}
 let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth', 'fixendofline']
 let s:all_options = s:safe_options + ['endofline', 'fileformat', 'fileencoding', 'bomb']
 let s:short_options = {
