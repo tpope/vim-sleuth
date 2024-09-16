@@ -385,6 +385,7 @@ function! s:Ready(detected) abort
   return has_key(a:detected.options, 'expandtab') && has_key(a:detected.options, 'shiftwidth')
 endfunction
 
+" Todo remove editor config support remove these settings
 let s:booleans = {'expandtab': &expandtab, 'fixendofline': &fixendofline, 'endofline': &endofline, 'bomb': &bomb}
 let s:safe_options = ['expandtab', 'shiftwidth', 'tabstop', 'textwidth', 'fixendofline']
 let s:all_options = s:safe_options + ['endofline', 'fileformat', 'fileencoding', 'bomb']
@@ -504,9 +505,11 @@ function! s:DetectDeclared() abort
     endif
   catch
   endtry
-  let [detected.editorconfig, detected.root] = s:DetectEditorConfig(detected.path)
-  call extend(detected.declared, s:EditorConfigToOptions(detected.editorconfig))
-  call extend(detected.declared, s:ModelineOptions())
+  " disable editor config parsing
+  " let [detected.editorconfig, detected.root] = s:DetectEditorConfig(detected.path)
+  " call extend(detected.declared, s:EditorConfigToOptions(detected.editorconfig))
+  " mode lines should already be applied 
+  " call extend(detected.declared, s:ModelineOptions())
   return detected
 endfunction
 
@@ -540,7 +543,9 @@ function! s:DetectHeuristics(into) abort
     return detected
   endif
   let dir = len(detected.path) ? fnamemodify(detected.path, ':h') : ''
-  let root = len(detected.root) ? fnamemodify(detected.root, ':h') : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
+  " root is current folder
+  let root=''
+  " let root = len(detected.root) ? fnamemodify(detected.root, ':h') : dir ==# s:Slash(expand('~')) ? dir : fnamemodify(dir, ':h')
   if detected.bufname =~# '^\a\a\+:' || root ==# '.' || !isdirectory(root)
     let dir = ''
   endif

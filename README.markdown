@@ -1,30 +1,26 @@
 # sleuth.vim
 
-This plugin automatically adjusts `'shiftwidth'` and `'expandtab'`
-heuristically based on the current file, or, in the case the current file is
-new, blank, or otherwise insufficient, by looking at other files of the same
-type in the current and parent directories.  Modelines and [EditorConfig][]
-are also consulted, adding `'tabstop'`, `'textwidth'`, `'endofline'`,
-`'fileformat'`, `'fileencoding'`, and `'bomb'` to the list of supported
-options.
+This plugin adapt vim indentation to the current or neighbouring files. it will detect if spaces are used as indentation and the number of spaces.
 
-[EditorConfig]: https://editorconfig.org/
+It only changes expandtab and shiftwidth away from default values. tabstop and all other settings are left intact.
+
+ disable neighbour scanning with
+
+    :set b:sleuth_neighbor_lim=0
 
 ## Installation
 
 Install using your favorite package manager, or use Vim's built-in package
 support:
 
-    mkdir -p ~/.vim/pack/tpope/start
-    cd ~/.vim/pack/tpope/start
-    git clone https://tpope.io/vim/sleuth.git
+    mkdir -p ~/.vim/pack/abc/start
+    cd ~/.vim/pack/abc/start
+    git clone --depth=1 https://github.com/tpope/vim-sleuth
     vim -u NONE -c "helptags sleuth/doc" -c q
 
-## Notes
+If you need to modify the plugin test the changes in the same vim session with 
 
-* If your file is consistently indented with hard tabs, `'shiftwidth'` will be
-  set to your `'tabstop'`.  Otherwise, a `'tabstop'` of 8 is enforced, unless
-  another value is explicitly declared in a modeline or EditorConfig.
+    :unlet g:loaded_sleuth | w | Sleuth
 
 ## Self-Promotion
 
