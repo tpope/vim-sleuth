@@ -213,9 +213,9 @@ function! s:FnmatchReplace(pat) abort
     return '\%(' . join(range(matchstr(a:pat, '[+-]\=\d\+'), matchstr(a:pat, '\.\.\zs[+-]\=\d\+')), '\|') . '\)'
   elseif a:pat =~# '^{.*\\\@<!\%(\\\\\)*,.*}$'
     let done = []
-    let rest = ',' . a:pat
+    let rest = a:pat[0:-2]
     while !empty(rest)
-      let match = matchstr(done, '\%(\\.\|{[^\{}]*}\|[^,]\)*', 1)
+      let match = matchstr(rest, '\%(\\.\|{[^\{}]*}\|[^,]\)*', 1)
       let rest = strpart(rest, len(match) + 1)
       call add(done, s:FnmatchTranslate(match))
     endwhile
