@@ -268,7 +268,7 @@ endfunction
 
 let s:editorconfig_cache = {}
 function! s:DetectEditorConfig(absolute_path, ...) abort
-  if empty(a:absolute_path)
+  if empty(a:absolute_path) || get(g:, 'sleuth_editorconfig_disable', 0)
     return [{}, '']
   endif
   let root = ''
